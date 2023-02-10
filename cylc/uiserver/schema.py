@@ -27,11 +27,11 @@ from graphene.types.generic import GenericScalar
 
 from cylc.flow.id import Tokens
 from cylc.flow.network.schema import (
-    ALL_JOB_ARGS,
     CyclePoint,
     GenericResponse,
     ID,
-    Job,
+    SortArgs,
+    Task,
     Mutations,
     Queries,
     process_resolver_info,
@@ -303,14 +303,20 @@ async def list_jobs(args):
                     submit_status,
                     time_run,
                     time_run_exit,
-                    run_status,
-                    job_runner_name,
                     job_id,
                     platform_name,
                     time_submit,
-                    time_submit_exit
+                    avg(strftime('%s', time_run) - strftime('%s', time_submit)) as queue_time,
+                    avg(strftime('%s', time_run_exit) - strftime('%s', time_run)) as mean_run_time,
+                    avg(strftime('%s', time_run_exit) - strftime('%s', time_submit)) as mean_total_time,
+                    count(*) as n
                 FROM
                     task_jobs
+                WHERE
+                    run_status = 0
+                GROUP BY
+                    name
+
             '''):
                 print('#', row)
                 jobs.append({
@@ -319,30 +325,47 @@ async def list_jobs(args):
                         task=row[0],
                         job=row[2]
                     ),
-                    'cycle_point': row[1],
                     'name': row[0],
-                    'state': row[3],
-                    'job_ID': row[8],
-                    'platform': row[9],
+                    'cycle_point': row[1],
                     'submit_num': row[2],
+                    'state': row[3],
                     'started_time': row[4],
                     'finished_time': row[5],
-                    'submitted_time': row[10],
-                    # TODO submitted exit time???
-                    'job_runner_name': row[7],
+                    'job_ID': row[6],
+                    'platform': row[7],
+                    'submitted_time': row[8],
+                    'mean_queue_time': row[9],
+                    'mean_run_time': row[10],
+                    'mean_total_time': row[11],
+                    'count': row[12]
                 })
     return jobs
 
 
+class UISTask(Task):
+
+    count = graphene.Int()
+    platform = graphene.String()
+    mean_total_time = graphene.Int()
+    mean_queue_time = graphene.Int()
+    mean_run_time = graphene.Int()
+
+
 class UISQueries(Queries):
 
-    jobs = graphene.List(
-        Job,
-        description=Job._meta.description,
+    tasks = graphene.List(
+        UISTask,
+        description=Task._meta.description,
         live=graphene.Boolean(default_value=True),
         strip_null=STRIP_NULL_DEFAULT,
         resolver=get_jobs,
-        **ALL_JOB_ARGS,
+        workflows=graphene.List(ID, default_value=[]),
+        exworkflows=graphene.List(ID, default_value=[]),
+        ids=graphene.List(ID, default_value=[]),
+        exids=graphene.List(ID, default_value=[]),
+        mindepth=graphene.Int(default_value=-1),
+        maxdepth=graphene.Int(default_value=-1),
+        sort=SortArgs(default_value=None),
     )
 
 
