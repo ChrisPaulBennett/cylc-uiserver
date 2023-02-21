@@ -306,12 +306,27 @@ async def list_jobs(args):
                     job_id,
                     platform_name,
                     time_submit,
-                    avg(strftime('%s', time_run) - strftime('%s', time_submit)) as queue_time,
-                    avg(strftime('%s', time_run_exit) - strftime('%s', time_run)) as mean_run_time,
-                    avg(strftime('%s', time_run_exit) - strftime('%s', time_submit)) as mean_total_time,
+                    min(queue_time) as min_queue_time,
+                    avg(queue_time) as mean_queue_time,
+                    max(queue_time) as max_queue_time,
+                    avg(queue_time * queue_time) as mean_squares_queue_time,
+                    min(run_time) as min_run_time,
+                    avg(run_time) as mean_run_time,
+                    max(run_time) as max_run_time,
+                    avg(run_time * run_time) as mean_squares_run_time,
+                    min(total_time) as min_total_time,
+                    avg(total_time) as mean_total_time,
+                    max(total_time) as max_total_time,
+                    avg(total_time * total_time) as mean_squares_total_time,
                     count(*) as n
                 FROM
-                    task_jobs
+                    (SELECT
+                        *,
+                        strftime('%s', time_run_exit) - strftime('%s', time_submit) as total_time,
+                        strftime('%s', time_run_exit) - strftime('%s', time_run) as run_time,
+                        strftime('%s', time_run) - strftime('%s', time_submit) as queue_time
+                    FROM
+                        task_jobs)
                 WHERE
                     run_status = 0
                 GROUP BY
@@ -334,10 +349,20 @@ async def list_jobs(args):
                     'job_ID': row[6],
                     'platform': row[7],
                     'submitted_time': row[8],
-                    'mean_queue_time': row[9],
-                    'mean_run_time': row[10],
-                    'mean_total_time': row[11],
-                    'count': row[12]
+                    'min_queue_time': row[9],
+                    'mean_queue_time': row[10],
+                    'max_queue_time': row[11],
+                    'std_dev_queue_time': (row[12] - row[10]**2)**0.5,
+                    'min_run_time': row[13],
+                    'mean_run_time': row[14],
+                    'max_run_time': row[15],
+                    'std_dev_run_time': (row[16] - row[14]**2)**0.5,
+                    'min_total_time': row[17],
+                    'mean_total_time': row[18],
+                    'max_total_time': row[19],
+                    'std_dev_total_time': (row[20] - row[18] ** 2) ** 0.5,
+                    'count': row[21],
+
                 })
     return jobs
 
@@ -346,9 +371,18 @@ class UISTask(Task):
 
     count = graphene.Int()
     platform = graphene.String()
+    min_total_time = graphene.Int()
     mean_total_time = graphene.Int()
+    max_total_time = graphene.Int()
+    std_dev_total_time = graphene.Float()
+    min_queue_time = graphene.Int()
     mean_queue_time = graphene.Int()
+    max_queue_time = graphene.Int()
+    std_dev_queue_time = graphene.Float()
+    min_run_time = graphene.Int()
     mean_run_time = graphene.Int()
+    max_run_time = graphene.Int()
+    std_dev_run_time = graphene.Float()
 
 
 class UISQueries(Queries):
