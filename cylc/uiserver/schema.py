@@ -296,42 +296,64 @@ async def list_jobs(args):
         with wdbm.get_pri_dao() as pri_dao:
             # TODO: support all arguments including states
             for row in pri_dao.connect().execute('''
-                SELECT
-                    name,
-                    cycle,
-                    submit_num,
-                    submit_status,
-                    time_run,
-                    time_run_exit,
-                    job_id,
-                    platform_name,
-                    time_submit,
-                    min(queue_time) as min_queue_time,
-                    avg(queue_time) as mean_queue_time,
-                    max(queue_time) as max_queue_time,
-                    avg(queue_time * queue_time) as mean_squares_queue_time,
-                    min(run_time) as min_run_time,
-                    avg(run_time) as mean_run_time,
-                    max(run_time) as max_run_time,
-                    avg(run_time * run_time) as mean_squares_run_time,
-                    min(total_time) as min_total_time,
-                    avg(total_time) as mean_total_time,
-                    max(total_time) as max_total_time,
-                    avg(total_time * total_time) as mean_squares_total_time,
-                    count(*) as n
-                FROM
-                    (SELECT
-                        *,
-                        strftime('%s', time_run_exit) - strftime('%s', time_submit) as total_time,
-                        strftime('%s', time_run_exit) - strftime('%s', time_run) as run_time,
-                        strftime('%s', time_run) - strftime('%s', time_submit) as queue_time
-                    FROM
-                        task_jobs)
-                WHERE
-                    run_status = 0
-                GROUP BY
-                    name
+SELECT
+    name,
+    cycle,
+    submit_num,
+    submit_status,
+    time_run,
+    time_run_exit,
+    job_id,
+    platform_name,
+    time_submit,
+    
+    -- Calculate Queue time stats
+    MIN(queue_time) AS min_queue_time,
+    AVG(queue_time) AS mean_queue_time,
+    MAX(queue_time) AS max_queue_time,
+    AVG(queue_time * queue_time) AS mean_squares_queue_time,
+    MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END) queue_quartile_1,
+    MAX(CASE WHEN queue_time_quartile = 2 THEN queue_time END) queue_quartile_2,
+    MAX(CASE WHEN queue_time_quartile = 3 THEN queue_time END) queue_quartile_3,
+    
+    -- Calculate Run time stats
+    MIN(run_time) AS min_run_time,
+    AVG(run_time) AS mean_run_time,
+    MAX(run_time) AS max_run_time,
+    AVG(run_time * run_time) AS mean_squares_run_time,
+    MAX(CASE WHEN run_time_quartile = 1 THEN run_time END) run_quartile_1,
+    MAX(CASE WHEN run_time_quartile = 2 THEN run_time END) run_quartile_2,
+    MAX(CASE WHEN run_time_quartile = 3 THEN run_time END) run_quartile_3,
+    
+    -- Calculate Total time stats
+    MIN(total_time) AS min_total_time,
+    AVG(total_time) AS mean_total_time,
+    MAX(total_time) AS max_total_time,
+    AVG(total_time * total_time) AS mean_squares_total_time,
+    MAX(CASE WHEN total_time_quartile = 1 THEN total_time END) total_quartile_1,
+    MAX(CASE WHEN total_time_quartile = 2 THEN total_time END) total_quartile_2,
+    MAX(CASE WHEN total_time_quartile = 3 THEN total_time END) total_quartile_3,
+    
+    COUNT(*) AS n
 
+FROM
+    (SELECT
+        *,
+        NTILE (4) OVER (ORDER BY queue_time) queue_time_quartile,
+        NTILE (4) OVER (ORDER BY run_time) run_time_quartile,
+        NTILE (4) OVER (ORDER BY total_time) total_time_quartile
+        FROM
+            (SELECT
+                *,
+                STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
+                STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
+                STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
+            FROM
+                task_jobs))
+WHERE
+    run_status = 0
+GROUP BY
+    name;
             '''):
                 print('#', row)
                 jobs.append({
@@ -349,40 +371,60 @@ async def list_jobs(args):
                     'job_ID': row[6],
                     'platform': row[7],
                     'submitted_time': row[8],
+                    # Queue time stats
                     'min_queue_time': row[9],
                     'mean_queue_time': row[10],
                     'max_queue_time': row[11],
                     'std_dev_queue_time': (row[12] - row[10]**2)**0.5,
-                    'min_run_time': row[13],
-                    'mean_run_time': row[14],
-                    'max_run_time': row[15],
-                    'std_dev_run_time': (row[16] - row[14]**2)**0.5,
-                    'min_total_time': row[17],
-                    'mean_total_time': row[18],
-                    'max_total_time': row[19],
-                    'std_dev_total_time': (row[20] - row[18] ** 2) ** 0.5,
-                    'count': row[21],
-
+                    'first_quartile_queue': row[13],
+                    'second_quartile_queue': row[14],
+                    'third_quartile_queue': row[15],
+                    # Run time stats
+                    'min_run_time': row[16],
+                    'mean_run_time': row[17],
+                    'max_run_time': row[18],
+                    'std_dev_run_time': (row[19] - row[17]**2)**0.5,
+                    'first_quartile_run': row[20],
+                    'second_quartile_run': row[21],
+                    'third_quartile_run': row[22],
+                    # Total
+                    'min_total_time': row[23],
+                    'mean_total_time': row[24],
+                    'max_total_time': row[25],
+                    'std_dev_total_time': (row[26] - row[24] ** 2) ** 0.5,
+                    'first_quartile_total': row[27],
+                    'second_quartile_total': row[28],
+                    'third_quartile_total': row[29],
+                    'count': row[30]
                 })
     return jobs
 
 
 class UISTask(Task):
 
-    count = graphene.Int()
     platform = graphene.String()
     min_total_time = graphene.Int()
     mean_total_time = graphene.Int()
     max_total_time = graphene.Int()
     std_dev_total_time = graphene.Float()
+    first_quartile_queue = graphene.Float()
+    second_quartile_queue = graphene.Float()
+    third_quartile_queue = graphene.Float()
     min_queue_time = graphene.Int()
     mean_queue_time = graphene.Int()
     max_queue_time = graphene.Int()
     std_dev_queue_time = graphene.Float()
+    first_quartile_run = graphene.Float()
+    second_quartile_run = graphene.Float()
+    third_quartile_run = graphene.Float()
     min_run_time = graphene.Int()
     mean_run_time = graphene.Int()
     max_run_time = graphene.Int()
     std_dev_run_time = graphene.Float()
+    first_quartile_total = graphene.Float()
+    second_quartile_total = graphene.Float()
+    third_quartile_total = graphene.Float()
+    count = graphene.Int()
 
 
 class UISQueries(Queries):
