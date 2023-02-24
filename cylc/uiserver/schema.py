@@ -339,17 +339,17 @@ SELECT
 FROM
     (SELECT
         *,
-        NTILE (4) OVER (ORDER BY queue_time) queue_time_quartile,
-        NTILE (4) OVER (ORDER BY run_time) run_time_quartile,
-        NTILE (4) OVER (ORDER BY total_time) total_time_quartile
+        NTILE (4) OVER (PARTITION BY name ORDER BY queue_time) queue_time_quartile,
+        NTILE (4) OVER (PARTITION BY name ORDER BY run_time) run_time_quartile,
+        NTILE (4) OVER (PARTITION BY name ORDER BY total_time) total_time_quartile
+    FROM
+        (SELECT
+            *,
+            STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
+            STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
+            STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
         FROM
-            (SELECT
-                *,
-                STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
-                STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
-                STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
-            FROM
-                task_jobs))
+            task_jobs))
 WHERE
     run_status = 0
 GROUP BY
@@ -395,6 +395,7 @@ GROUP BY
                     'first_quartile_total': row[27],
                     'second_quartile_total': row[28],
                     'third_quartile_total': row[29],
+
                     'count': row[30]
                 })
     return jobs
