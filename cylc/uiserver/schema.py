@@ -294,8 +294,16 @@ async def list_jobs(args):
         db_file = Path(get_workflow_srv_dir(workflow['workflow']), 'db')
         wdbm = WorkflowDatabaseManager(db_file.parent)
         with wdbm.get_pri_dao() as pri_dao:
-            # TODO: support all arguments including states
-            for row in pri_dao.connect().execute('''
+            conn = pri_dao.connect()
+            jobs = make_query(conn, workflow)
+    return jobs
+
+
+def make_query(conn, workflow):
+
+    tasks = []
+    # TODO: support all arguments including states
+    for row in conn.execute('''
 SELECT
     name,
     cycle,
@@ -347,58 +355,59 @@ FROM
             *,
             STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
             STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
-            STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
+            STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time 
         FROM
             task_jobs))
 WHERE
     run_status = 0
 GROUP BY
     name;
-            '''):
-                print('#', row)
-                jobs.append({
-                    'id': workflow.duplicate(
-                        cycle=row[1],
-                        task=row[0],
-                        job=row[2]
-                    ),
-                    'name': row[0],
-                    'cycle_point': row[1],
-                    'submit_num': row[2],
-                    'state': row[3],
-                    'started_time': row[4],
-                    'finished_time': row[5],
-                    'job_ID': row[6],
-                    'platform': row[7],
-                    'submitted_time': row[8],
-                    # Queue time stats
-                    'min_queue_time': row[9],
-                    'mean_queue_time': row[10],
-                    'max_queue_time': row[11],
-                    'std_dev_queue_time': (row[12] - row[10]**2)**0.5,
-                    'first_quartile_queue': row[13],
-                    'second_quartile_queue': row[14],
-                    'third_quartile_queue': row[15],
-                    # Run time stats
-                    'min_run_time': row[16],
-                    'mean_run_time': row[17],
-                    'max_run_time': row[18],
-                    'std_dev_run_time': (row[19] - row[17]**2)**0.5,
-                    'first_quartile_run': row[20],
-                    'second_quartile_run': row[21],
-                    'third_quartile_run': row[22],
-                    # Total
-                    'min_total_time': row[23],
-                    'mean_total_time': row[24],
-                    'max_total_time': row[25],
-                    'std_dev_total_time': (row[26] - row[24] ** 2) ** 0.5,
-                    'first_quartile_total': row[27],
-                    'second_quartile_total': row[28],
-                    'third_quartile_total': row[29],
+'''):
+        print('#', row)
+        tasks.append({
+            'id': workflow.duplicate(
+                cycle=row[1],
+                task=row[0],
+                job=row[2]
+            ),
+            'name': row[0],
+            'cycle_point': row[1],
+            'submit_num': row[2],
+            'state': row[3],
+            'started_time': row[4],
+            'finished_time': row[5],
+            'job_ID': row[6],
+            'platform': row[7],
+            'submitted_time': row[8],
+            # Queue time stats
+            'min_queue_time': row[9],
+            'mean_queue_time': row[10],
+            'max_queue_time': row[11],
+            'std_dev_queue_time': (row[12] - row[10]**2)**0.5,
+            'first_quartile_queue': row[13],
+            'second_quartile_queue': row[14],
+            'third_quartile_queue': row[15],
+            # Run time stats
+            'min_run_time': row[16],
+            'mean_run_time': row[17],
+            'max_run_time': row[18],
+            'std_dev_run_time': (row[19] - row[17]**2)**0.5,
+            'first_quartile_run': row[20],
+            'second_quartile_run': row[21],
+            'third_quartile_run': row[22],
+            # Total
+            'min_total_time': row[23],
+            'mean_total_time': row[24],
+            'max_total_time': row[25],
+            'std_dev_total_time': (row[26] - row[24] ** 2) ** 0.5,
+            'first_quartile_total': row[27],
+            'second_quartile_total': row[28],
+            'third_quartile_total': row[29],
 
-                    'count': row[30]
-                })
-    return jobs
+            'count': row[30]
+        })
+
+    return tasks
 
 
 class UISTask(Task):
@@ -407,24 +416,24 @@ class UISTask(Task):
     min_total_time = graphene.Int()
     mean_total_time = graphene.Int()
     max_total_time = graphene.Int()
-    std_dev_total_time = graphene.Float()
-    first_quartile_queue = graphene.Float()
-    second_quartile_queue = graphene.Float()
-    third_quartile_queue = graphene.Float()
+    std_dev_total_time = graphene.Int()
+    first_quartile_queue = graphene.Int()
+    second_quartile_queue = graphene.Int()
+    third_quartile_queue = graphene.Int()
     min_queue_time = graphene.Int()
     mean_queue_time = graphene.Int()
     max_queue_time = graphene.Int()
-    std_dev_queue_time = graphene.Float()
-    first_quartile_run = graphene.Float()
-    second_quartile_run = graphene.Float()
-    third_quartile_run = graphene.Float()
+    std_dev_queue_time = graphene.Int()
+    first_quartile_run = graphene.Int()
+    second_quartile_run = graphene.Int()
+    third_quartile_run = graphene.Int()
     min_run_time = graphene.Int()
     mean_run_time = graphene.Int()
     max_run_time = graphene.Int()
-    std_dev_run_time = graphene.Float()
-    first_quartile_total = graphene.Float()
-    second_quartile_total = graphene.Float()
-    third_quartile_total = graphene.Float()
+    std_dev_run_time = graphene.Int()
+    first_quartile_total = graphene.Int()
+    second_quartile_total = graphene.Int()
+    third_quartile_total = graphene.Int()
     count = graphene.Int()
 
 
