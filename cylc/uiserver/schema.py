@@ -358,6 +358,7 @@ def run_task_query(conn, workflow):
     # TODO: support all arguments including states
     # https://github.com/cylc/cylc-uiserver/issues/440
     tasks = []
+    total_of_totals = 0
     for row in conn.execute('''
 WITH data AS (
   SELECT 
@@ -469,6 +470,7 @@ SELECT
 FROM data2
 GROUP BY name;
 '''):
+        total_of_totals += row[40]
         tasks.append({
             'id': workflow.duplicate(
                 cycle=row[1],
@@ -533,6 +535,8 @@ GROUP BY name;
             'count': row[45]
         })
 
+    for task in tasks:
+        task['total_of_totals'] = total_of_totals
     return tasks
 
 
@@ -654,6 +658,7 @@ class UISTask(Task):
         description=sstrip('''
                 List containing the first, second,
                 third and forth quartile for CPU time.'''))
+    total_of_totals = graphene.Int()
     count = graphene.Int()
 
 
