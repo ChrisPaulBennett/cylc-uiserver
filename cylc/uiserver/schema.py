@@ -112,7 +112,7 @@ class Play(graphene.Mutation):
         )
         start_cycle_point = CyclePoint(
             description=sstrip('''
-                Set the start cycle point, which may be after the initial 
+                Set the start cycle point, which may be after the initial
                 cycle point.
 
                 If the specified start point is not in the sequence, the next
@@ -365,10 +365,10 @@ data2 AS (
     run_time_quartile,
     NTILE(4) OVER (PARTITION BY name ORDER BY total_time) AS,
     total_time_quartile,
-    NTILE(4) OVER (PARTITION BY name ORDER BY CAST, 
+    NTILE(4) OVER (PARTITION BY name ORDER BY CAST,
     (TRIM(REPLACE(max_rss, 'max_rss ', '')) AS INT)) AS max_rss_quartile,
     CAST(TRIM(REPLACE(max_rss, 'max_rss ', '')) AS INT) AS max_rss,
-    NTILE(4) OVER (PARTITION BY name ORDER BY CAST, 
+    NTILE(4) OVER (PARTITION BY name ORDER BY CAST,
     (TRIM(REPLACE(cpu_time, 'cpu_time ', '')) AS INT)) AS cpu_time_quartile,
     CAST(TRIM(REPLACE(cpu_time, 'cpu_time ', '')) AS INT) AS cpu_time
   FROM data1
@@ -383,7 +383,7 @@ SELECT
   job_id,
   platform_name,
   time_submit,
-  
+
   -- Calculate Queue time stats
   MIN(queue_time) AS min_queue_time,
   CAST(AVG(queue_time) AS FLOAT) AS mean_queue_time,
@@ -438,7 +438,7 @@ SELECT
   cpu_time_quartile_2,
   MAX(CASE WHEN cpu_time_quartile = 3 THEN cpu_time END) AS,
   cpu_time_quartile_3,
-  
+
   COUNT(*) AS n
 FROM data2
 GROUP BY name;
@@ -531,8 +531,8 @@ WITH data AS (
         CAST(REPLACE(te.message, 'max_rss ', '') AS INT) AS max_rss
     FROM
         task_jobs tj
-    LEFT JOIN 
-        task_events te ON tj.name = te.name AND tj.cycle = te.cycle AND, 
+    LEFT JOIN
+        task_events te ON tj.name = te.name AND tj.cycle = te.cycle AND,
         tj.submit_num = te.submit_num AND te.message LIKE 'max_rss%'
     WHERE
         tj.run_status = 0)
