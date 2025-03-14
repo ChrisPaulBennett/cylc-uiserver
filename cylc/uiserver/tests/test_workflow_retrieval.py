@@ -88,6 +88,7 @@ def test_make_task_query_1():
     assert return_value[0]['queue_quartiles'][2] == 60
     assert return_value[0]['run_quartiles'][2] == 540
     assert return_value[0]['total_quartiles'][2] == 600
+    assert return_value[0]['total_of_totals'] == 57376768
 
 
 def test_make_task_query_2():
@@ -158,6 +159,7 @@ def test_make_task_query_2():
     assert return_value[0]['queue_quartiles'][2] == 60
     assert return_value[0]['run_quartiles'][2] == 540
     assert return_value[0]['total_quartiles'][2] == 600
+    assert return_value[0]['total_of_totals'] == 114753536
 
 
 def test_make_task_query_3():
@@ -250,6 +252,7 @@ def test_make_task_query_3():
     assert return_value[0]['total_quartiles'][2] == 720
     assert return_value[0]['max_rss_quartiles'][2] == 57376768
     assert return_value[0]['cpu_time_quartiles'][2] == 300
+    assert return_value[0]['total_of_totals'] == 600
 
 
 def test_make_jobs_query_1():
