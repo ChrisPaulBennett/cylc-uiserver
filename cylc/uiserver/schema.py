@@ -289,48 +289,7 @@ async def get_elements(root, info, **kwargs):
     kwargs['exworkflows'] = [
         Tokens(w_id) for w_id in kwargs['exworkflows']]
 
-    # ret = []
-    # if resource fields requested
-    # ret.append(get_job_resource_request(info, kwargs))
-    # if database fields requested
-    # ret.append(await list_elements(kwargs))
-    # merge results if both sets of fields were requested
-    # return merge_results(ret)
     return await list_elements(kwargs)
-
-
-def get_job_resource_request(info, args):
-    """Return the resource request for a task as configured.
-    TODO:
-    * Determine the batch system by mapping the task onto the specified
-      platform.
-    * We will likely want the resource requested by a task when it was
-      submitted (which may be altered by reloads or broadcasts) rather than the
-      resource that is configured in the workflow.
-    """
-
-    ret = {}
-
-    for workflow_id in args['workflows']:
-
-        for namespace in args['tasks']:
-            namespace_id = (Tokens(workflow_id).duplicate(
-                namespace=namespace).id)
-
-            namespace = info.context['resolvers'].data_store_mgr.data[
-                workflow_id][TASKS][namespace_id]
-
-            directives = {item['key']: item['value']
-                          for item in json.loads(namespace.runtime.directives)}
-
-            memory = int(directives.get('--mem', 0))
-            cpus = math.ceil(int(directives.get('--tasks', 0)) / 2)
-            time = float(directives.get('--time', 0))
-
-            # TODO: put the results into the format GraphQL is expecting
-            ret[...] = {'memory': memory, 'cpus': cpus, 'time': time}
-    breakpoint()
-    return ret
 
 
 async def list_elements(args):
@@ -422,7 +381,7 @@ SELECT
   
   -- Calculate Queue time stats
   MIN(queue_time) AS min_queue_time,
-  CAST(AVG(queue_time) AS INT) AS mean_queue_time,
+  CAST(AVG(queue_time) AS FLOAT) AS mean_queue_time,
   MAX(queue_time) AS max_queue_time,
   CAST(AVG(queue_time * queue_time) AS INT) AS mean_squares_queue_time,
   MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END) AS queue_quartile_1,
@@ -431,7 +390,7 @@ SELECT
 
   -- Calculate Run time stats
   MIN(run_time) AS min_run_time,
-  CAST(AVG(run_time) AS INT) AS mean_run_time,
+  CAST(AVG(run_time) AS FLOAT) AS mean_run_time,
   MAX(run_time) AS max_run_time,
   CAST(AVG(run_time * run_time) AS INT) AS mean_squares_run_time,
   MAX(CASE WHEN run_time_quartile = 1 THEN run_time END) AS run_quartile_1,
@@ -440,7 +399,7 @@ SELECT
 
   -- Calculate Total time stats
   MIN(total_time) AS min_total_time,
-  CAST(AVG(total_time) AS INT) AS mean_total_time,
+  CAST(AVG(total_time) AS FLOAT) AS mean_total_time,
   MAX(total_time) AS max_total_time,
   CAST(AVG(total_time * total_time) AS INT) AS mean_squares_total_time,
   MAX(CASE WHEN total_time_quartile = 1 THEN total_time END) AS total_quartile_1,
