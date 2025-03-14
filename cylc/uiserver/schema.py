@@ -333,16 +333,16 @@ WITH data AS (
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
     STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
   FROM task_jobs tj
-  LEFT JOIN task_events te ON tj.name = te.name AND,
-  tj.cycle = te.cycle AND tj.submit_num = te.submit_num
+  LEFT JOIN task_events te ON tj.name = te.name AND tj.cycle = te.cycle
+  AND tj.submit_num = te.submit_num
   WHERE te.message LIKE 'max_rss%'
 ),
 data1 AS (
   SELECT *,
     te.message as cpu_time
   FROM data
-  LEFT JOIN task_events te ON data.name = te.name AND,
-  data.cycle = te.cycle AND data.submit_num = te.submit_num
+  LEFT JOIN task_events te ON data.name = te.name AND data.cycle = te.cycle
+  AND data.submit_num = te.submit_num
   WHERE te.message LIKE 'cpu_time%'
 ),
 data2 AS (
@@ -359,16 +359,16 @@ data2 AS (
     queue_time,
     run_time,
     total_time,
-    NTILE(4) OVER (PARTITION BY name ORDER BY queue_time) AS,
-    queue_time_quartile,
-    NTILE(4) OVER (PARTITION BY name ORDER BY run_time) AS,
-    run_time_quartile,
-    NTILE(4) OVER (PARTITION BY name ORDER BY total_time) AS,
-    total_time_quartile,
-    NTILE(4) OVER (PARTITION BY name ORDER BY CAST,
+    NTILE(4) OVER (PARTITION BY name ORDER BY queue_time)
+    AS queue_time_quartile,
+    NTILE(4) OVER (PARTITION BY name ORDER BY run_time)
+    AS run_time_quartile,
+    NTILE(4) OVER (PARTITION BY name ORDER BY total_time)
+    AS total_time_quartile,
+    NTILE(4) OVER (PARTITION BY name ORDER BY CAST
     (TRIM(REPLACE(max_rss, 'max_rss ', '')) AS INT)) AS max_rss_quartile,
     CAST(TRIM(REPLACE(max_rss, 'max_rss ', '')) AS INT) AS max_rss,
-    NTILE(4) OVER (PARTITION BY name ORDER BY CAST,
+    NTILE(4) OVER (PARTITION BY name ORDER BY CAST
     (TRIM(REPLACE(cpu_time, 'cpu_time ', '')) AS INT)) AS cpu_time_quartile,
     CAST(TRIM(REPLACE(cpu_time, 'cpu_time ', '')) AS INT) AS cpu_time
   FROM data1
@@ -389,12 +389,12 @@ SELECT
   CAST(AVG(queue_time) AS FLOAT) AS mean_queue_time,
   MAX(queue_time) AS max_queue_time,
   CAST(AVG(queue_time * queue_time) AS INT) AS mean_squares_queue_time,
-  MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END) AS,
-  queue_quartile_1,
-  MAX(CASE WHEN queue_time_quartile = 2 THEN queue_time END) AS,
-  queue_quartile_2,
-  MAX(CASE WHEN queue_time_quartile = 3 THEN queue_time END) AS,
-  queue_quartile_3,
+  MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END)
+  AS queue_quartile_1,
+  MAX(CASE WHEN queue_time_quartile = 2 THEN queue_time END)
+  AS queue_quartile_2,
+  MAX(CASE WHEN queue_time_quartile = 3 THEN queue_time END)
+  AS queue_quartile_3,
 
   -- Calculate Run time stats
   MIN(run_time) AS min_run_time,
@@ -410,12 +410,12 @@ SELECT
   CAST(AVG(total_time) AS FLOAT) AS mean_total_time,
   MAX(total_time) AS max_total_time,
   CAST(AVG(total_time * total_time) AS INT) AS mean_squares_total_time,
-  MAX(CASE WHEN total_time_quartile = 1 THEN total_time END) AS,
-  total_quartile_1,
-  MAX(CASE WHEN total_time_quartile = 2 THEN total_time END) AS,
-  total_quartile_2,
-  MAX(CASE WHEN total_time_quartile = 3 THEN total_time END) AS,
-  total_quartile_3,
+  MAX(CASE WHEN total_time_quartile = 1 THEN total_time END)
+  AS total_quartile_1,
+  MAX(CASE WHEN total_time_quartile = 2 THEN total_time END)
+  AS total_quartile_2,
+  MAX(CASE WHEN total_time_quartile = 3 THEN total_time END)
+  AS total_quartile_3,
 
   -- Calculate RSS stats
   MIN(max_rss) AS min_max_rss,
@@ -432,12 +432,12 @@ SELECT
   MAX(cpu_time) AS max_cpu_time,
   CAST(TOTAL(cpu_time) AS INT) AS total_cpu_time,
   CAST(AVG(cpu_time * cpu_time) AS INT) AS mean_squares_cpu_time,
-  MAX(CASE WHEN cpu_time_quartile = 1 THEN cpu_time END) AS,
-  cpu_time_quartile_1,
-  MAX(CASE WHEN cpu_time_quartile = 2 THEN cpu_time END) AS,
-  cpu_time_quartile_2,
-  MAX(CASE WHEN cpu_time_quartile = 3 THEN cpu_time END) AS,
-  cpu_time_quartile_3,
+  MAX(CASE WHEN cpu_time_quartile = 1 THEN cpu_time END)
+  AS cpu_time_quartile_1,
+  MAX(CASE WHEN cpu_time_quartile = 2 THEN cpu_time END)
+  AS cpu_time_quartile_2,
+  MAX(CASE WHEN cpu_time_quartile = 3 THEN cpu_time END)
+  AS cpu_time_quartile_3,
 
   COUNT(*) AS n
 FROM data2
@@ -532,7 +532,7 @@ WITH data AS (
     FROM
         task_jobs tj
     LEFT JOIN
-        task_events te ON tj.name = te.name AND tj.cycle = te.cycle AND,
+        task_events te ON tj.name = te.name AND tj.cycle = te.cycle AND
         tj.submit_num = te.submit_num AND te.message LIKE 'max_rss%'
     WHERE
         tj.run_status = 0)
@@ -547,16 +547,16 @@ SELECT
   data.job_id,
   data.platform_name,
   data.time_submit,
-  STRFTIME('%s', data.time_run_exit) - STRFTIME('%s', data.time_submit),
+  STRFTIME('%s', data.time_run_exit) - STRFTIME('%s', data.time_submit)
   AS total_time,
-  STRFTIME('%s', data.time_run_exit) - STRFTIME('%s', data.time_run),
+  STRFTIME('%s', data.time_run_exit) - STRFTIME('%s', data.time_run)
   AS run_time,
-  STRFTIME('%s', data.time_run) - STRFTIME('%s', data.time_submit),
+  STRFTIME('%s', data.time_run) - STRFTIME('%s', data.time_submit)
   AS queue_time,
   data.max_rss,
   CAST(REPLACE(te.message, 'cpu_time ', '') AS INT) AS cpu_time
 FROM data
-LEFT JOIN task_events te ON data.name = te.name AND,
+LEFT JOIN task_events te ON data.name = te.name AND
 data.cycle = te.cycle AND data.submit_num = te.submit_num
 WHERE te.message LIKE 'cpu_time%'
     {where_clauses};
