@@ -13,45 +13,81 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+"""This file tests the ability for the cylc UI to retrieve workflow information
+and perform simple statistical calculations for the analysis tab"""
+
 import pytest
 import sqlite3
-from typing import List
 
 from cylc.flow.id import Tokens
-from cylc.uiserver.schema import run_task_query, run_jobs_query, \
-    list_elements, get_elements
+from cylc.uiserver.schema import (
+    run_task_query,
+    run_jobs_query,
+    list_elements,
+    get_elements,
+)
 
 
-'''This file tests the ability for the cylc UI to retrieve workflow information
-and perform simple statistical calculations for the analysis tab'''
-
-
-def test_make_task_query_1():
+def make_db(*task_entries):
+    """Create a DB and populate the task_jobs table."""
     conn = sqlite3.connect(':memory:')
-    conn.execute('''CREATE TABLE task_jobs(cycle TEXT, name TEXT,
-    submit_num INTEGER, flow_nums TEXT, is_manual_submit INTEGER,
-    try_num INTEGER, time_submit TEXT, time_submit_exit TEXT,
-    submit_status INTEGER, time_run TEXT, time_run_exit TEXT,
-    run_signal TEXT, run_status INTEGER, platform_name TEXT,
-    job_runner_name TEXT, job_id TEXT,
-    PRIMARY KEY(cycle, name, submit_num));''')
+    conn.execute(
+        '''
+        CREATE TABLE
+            task_jobs(
+                cycle TEXT,
+                name TEXT,
+                submit_num INTEGER,
+                flow_nums TEXT,
+                is_manual_submit INTEGER,
+                try_num INTEGER,
+                time_submit TEXT,
+                time_submit_exit TEXT,
+                submit_status INTEGER,
+                time_run TEXT,
+                time_run_exit TEXT,
+                run_signal TEXT,
+                run_status INTEGER,
+                platform_name TEXT,
+                job_runner_name TEXT,
+                job_id TEXT,
+                PRIMARY KEY(cycle, name, submit_num)
+            );
+    '''
+    )
 
     conn.execute('''CREATE TABLE task_events(cycle TEXT, name TEXT, submit_num INTEGER,
      time TEXT, event TEXT, message TEXT);''')
 
     conn.executemany(
         'INSERT into task_jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [('1', 'Task_1', 1, '{1}', 0, 1,
-          '2022-12-14T15:00:00Z', '2022-12-14T15:01:00Z', 0,
-          '2022-12-14T15:01:00Z', '2022-12-14T15:10:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob')
-         ])
-    conn.executemany(
-        'INSERT into task_events VALUES (?,?,?,?,?,?)',
-        [('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 57376768')
-         ])
+        task_entries,
+    )
     conn.commit()
+    return conn
+
+
+def test_make_task_query_1():
+    conn = make_db(
+        (
+            '1',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-14T15:00:00Z',
+            '2022-12-14T15:01:00Z',
+            0,
+            '2022-12-14T15:01:00Z',
+            '2022-12-14T15:10:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        )
+    )
     workflow = Tokens('~user/workflow')
 
     return_value = run_task_query(conn, workflow)
@@ -79,7 +115,7 @@ def test_make_task_query_1():
     assert return_value[0]['run_quartiles'][1] == 540
     assert return_value[0]['total_quartiles'][1] == 600
     assert return_value[0]['started_time'] == '2022-12-14T15:01:00Z'
-    assert return_value[0]['state'] == 0
+    assert return_value[0]['state'] == 'succeeded'
     assert return_value[0]['std_dev_queue_time'] == pytest.approx(0.0, 0.01)
     assert return_value[0]['std_dev_run_time'] == pytest.approx(0.0, 0.01)
     assert return_value[0]['std_dev_total_time'] == pytest.approx(0.0, 0.01)
@@ -92,36 +128,44 @@ def test_make_task_query_1():
 
 
 def test_make_task_query_2():
-    conn = sqlite3.connect(':memory:')
-    conn.execute('''CREATE TABLE task_jobs(cycle TEXT, name TEXT,
-    submit_num INTEGER, flow_nums TEXT, is_manual_submit INTEGER,
-    try_num INTEGER, time_submit TEXT, time_submit_exit TEXT,
-    submit_status INTEGER, time_run TEXT, time_run_exit TEXT,
-    run_signal TEXT, run_status INTEGER, platform_name TEXT,
-    job_runner_name TEXT, job_id TEXT,
-    PRIMARY KEY(cycle, name, submit_num));''')
-
-    conn.execute('''CREATE TABLE task_events(cycle TEXT, name TEXT, submit_num INTEGER,
-     time TEXT, event TEXT, message TEXT);''')
-
-    conn.executemany(
-        'INSERT into task_jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [('1', 'Task_1', '01', '{1}', 0, 1,
-          '2022-12-14T15:00:00Z', '2022-12-14T15:01:00Z', 0,
-          '2022-12-14T15:01:00Z', '2022-12-14T15:10:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob'),
-         ('2', 'Task_1', '01', '{1}', 0, 1,
-          '2022-12-15T15:00:00Z', '2022-12-15T15:01:15Z', 0,
-          '2022-12-15T15:01:16Z', '2022-12-15T15:12:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob')
-         ])
-    conn.executemany(
-        'INSERT into task_events VALUES (?,?,?,?,?,?)',
-        [('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 57376768'),
-         ('2', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('2', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 57376768')
-         ])
+    conn = make_db(
+        (
+            '1',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-14T15:00:00Z',
+            '2022-12-14T15:01:00Z',
+            0,
+            '2022-12-14T15:01:00Z',
+            '2022-12-14T15:10:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+        (
+            '2',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-15T15:00:00Z',
+            '2022-12-15T15:01:15Z',
+            0,
+            '2022-12-15T15:01:16Z',
+            '2022-12-15T15:12:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+    )
     conn.commit()
     workflow = Tokens('~user/workflow')
 
@@ -150,7 +194,7 @@ def test_make_task_query_2():
     assert return_value[0]['run_quartiles'][1] == 644
     assert return_value[0]['total_quartiles'][1] == 720
     assert return_value[0]['started_time'] == '2022-12-15T15:01:16Z'
-    assert return_value[0]['state'] == 0
+    assert return_value[0]['state'] == 'succeeded'
     assert return_value[0]['std_dev_queue_time'] == pytest.approx(8.00, 0.01)
     assert return_value[0]['std_dev_run_time'] == pytest.approx(52.0, 0.01)
     assert return_value[0]['std_dev_total_time'] == pytest.approx(60.0, 0.01)
@@ -163,42 +207,62 @@ def test_make_task_query_2():
 
 
 def test_make_task_query_3():
-    conn = sqlite3.connect(':memory:')
-    conn.execute('''CREATE TABLE task_jobs(cycle TEXT, name TEXT,
-    submit_num INTEGER, flow_nums TEXT, is_manual_submit INTEGER,
-    try_num INTEGER, time_submit TEXT, time_submit_exit TEXT,
-    submit_status INTEGER, time_run TEXT, time_run_exit TEXT,
-    run_signal TEXT, run_status INTEGER, platform_name TEXT,
-    job_runner_name TEXT, job_id TEXT,
-    PRIMARY KEY(cycle, name, submit_num));''')
-
-    conn.execute('''CREATE TABLE task_events(cycle TEXT, name TEXT, submit_num INTEGER,
-     time TEXT, event TEXT, message TEXT);''')
-
-    conn.executemany(
-        'INSERT into task_jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [('1', 'Task_1', 1, '{1}', 0, 1,
-          '2022-12-14T15:00:00Z', '2022-12-14T15:01:00Z', 0,
-          '2022-12-14T15:01:00Z', '2022-12-14T15:10:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob'),
-         ('2', 'Task_1', 1, '{1}', 0, 1,
-          '2022-12-15T15:00:00Z', '2022-12-15T15:01:15Z', 0,
-          '2022-12-15T15:01:16Z', '2022-12-15T15:12:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob'),
-         ('3', 'Task_1', 1, '{1}', 0, 1,
-          '2022-12-16T15:00:00Z', '2022-12-16T15:01:15Z', 0,
-          '2022-12-16T15:01:16Z', '2022-12-16T15:12:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob')
-         ])
-    conn.executemany(
-        'INSERT into task_events VALUES (?,?,?,?,?,?)',
-        [('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 100'),
-         ('2', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('2', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 200'),
-         ('3', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('3', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 300')
-         ])
+    conn = make_db(
+        (
+            '1',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-14T15:00:00Z',
+            '2022-12-14T15:01:00Z',
+            0,
+            '2022-12-14T15:01:00Z',
+            '2022-12-14T15:10:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+        (
+            '2',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-15T15:00:00Z',
+            '2022-12-15T15:01:15Z',
+            0,
+            '2022-12-15T15:01:16Z',
+            '2022-12-15T15:12:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+        (
+            '3',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-16T15:00:00Z',
+            '2022-12-16T15:01:15Z',
+            0,
+            '2022-12-16T15:01:16Z',
+            '2022-12-16T15:12:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+    )
     conn.commit()
     workflow = Tokens('~user/workflow')
 
@@ -239,7 +303,7 @@ def test_make_task_query_3():
     assert return_value[0]['max_rss_quartiles'][1] == 57376768
     assert return_value[0]['cpu_time_quartiles'][1] == 200
     assert return_value[0]['started_time'] == '2022-12-16T15:01:16Z'
-    assert return_value[0]['state'] == 0
+    assert return_value[0]['state'] == 'succeeded'
     assert return_value[0]['std_dev_queue_time'] == pytest.approx(7.54, 0.01)
     assert return_value[0]['std_dev_run_time'] == pytest.approx(49.02, 0.01)
     assert return_value[0]['std_dev_total_time'] == pytest.approx(56.56, 0.01)
@@ -256,42 +320,62 @@ def test_make_task_query_3():
 
 
 def test_make_jobs_query_1():
-    conn = sqlite3.connect(':memory:')
-    conn.execute('''CREATE TABLE task_jobs(cycle TEXT, name TEXT,
-    submit_num INTEGER, flow_nums TEXT, is_manual_submit INTEGER,
-    try_num INTEGER, time_submit TEXT, time_submit_exit TEXT,
-    submit_status INTEGER, time_run TEXT, time_run_exit TEXT,
-    run_signal TEXT, run_status INTEGER, platform_name TEXT,
-    job_runner_name TEXT, job_id TEXT,
-    PRIMARY KEY(cycle, name, submit_num));''')
-
-    conn.execute('''CREATE TABLE task_events(cycle TEXT, name TEXT, submit_num INTEGER,
-    time TEXT, event TEXT, message TEXT);''')
-
-    conn.executemany(
-        'INSERT into task_jobs VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [('1', 'Task_1', '01', '{1}', 0, 1,
-          '2022-12-14T15:00:00Z', '2022-12-14T15:01:00Z', 0,
-          '2022-12-14T15:01:00Z', '2022-12-14T15:10:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob'),
-         ('2', 'Task_1', '01', '{1}', 0, 1,
-          '2022-12-15T15:00:00Z', '2022-12-15T15:01:15Z', 0,
-          '2022-12-15T15:01:16Z', '2022-12-15T15:12:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob'),
-         ('3', 'Task_1', '01', '{1}', 0, 1,
-          '2022-12-16T15:00:00Z', '2022-12-16T15:01:15Z', 0,
-          '2022-12-16T15:01:16Z', '2022-12-16T15:12:00Z', None, 0,
-          'MyPlatform', 'User', 'UsersJob')
-         ])
-    conn.executemany(
-        'INSERT into task_events VALUES (?,?,?,?,?,?)',
-        [('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376768'),
-         ('1', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 57376768'),
-         ('2', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376767'),
-         ('2', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 57376766'),
-         ('3', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'max_rss 57376765'),
-         ('3', 'Task_1', 1, '2022-12-14T15:00:00Z', 'message debug', 'cpu_time 57376764')
-         ])
+    conn = make_db(
+        (
+            '1',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-14T15:00:00Z',
+            '2022-12-14T15:01:00Z',
+            0,
+            '2022-12-14T15:01:00Z',
+            '2022-12-14T15:10:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+        (
+            '2',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-15T15:00:00Z',
+            '2022-12-15T15:01:15Z',
+            0,
+            '2022-12-15T15:01:16Z',
+            '2022-12-15T15:12:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+        (
+            '3',
+            'Task_1',
+            '01',
+            '{1}',
+            0,
+            1,
+            '2022-12-16T15:00:00Z',
+            '2022-12-16T15:01:15Z',
+            0,
+            '2022-12-16T15:01:16Z',
+            '2022-12-16T15:12:00Z',
+            None,
+            0,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        ),
+    )
     conn.commit()
     workflow = Tokens('~user/workflow')
     tasks = []
@@ -307,7 +391,7 @@ def test_make_jobs_query_1():
     assert return_value[0]['name'] == 'Task_1'
     assert return_value[0]['platform'] == 'MyPlatform'
     assert return_value[0]['started_time'] == '2022-12-14T15:01:00Z'
-    assert return_value[0]['state'] == 0
+    assert return_value[0]['state'] == 'succeeded'
     assert return_value[0]['submit_num'] == 1
     assert return_value[0]['submitted_time'] == '2022-12-14T15:00:00Z'
     assert return_value[0]['max_rss'] == 57376768
@@ -320,7 +404,7 @@ def test_make_jobs_query_1():
     assert return_value[1]['name'] == 'Task_1'
     assert return_value[1]['platform'] == 'MyPlatform'
     assert return_value[1]['started_time'] == '2022-12-15T15:01:16Z'
-    assert return_value[1]['state'] == 0
+    assert return_value[1]['state'] == 'succeeded'
     assert return_value[1]['submit_num'] == 1
     assert return_value[1]['submitted_time'] == '2022-12-15T15:00:00Z'
     assert return_value[1]['max_rss'] == 57376767
@@ -330,11 +414,12 @@ def test_make_jobs_query_1():
 async def test_list_elements(monkeypatch):
 
     with pytest.raises(Exception) as e_info:
-        await list_elements({'stuff': [1, 2, 3], 'workflows': []})
+        await list_elements('tasks', {'stuff': [1, 2, 3], 'workflows': []})
 
     exception_raised = e_info.value
-    assert exception_raised.args[0] == \
-           'At least one workflow must be provided.'
+    assert (
+        exception_raised.args[0] == 'At least one workflow must be provided.'
+    )
 
 
 @pytest.mark.parametrize(
@@ -347,7 +432,7 @@ async def test_list_elements(monkeypatch):
                 'workflows': ['~u/w'],
             },
             [],
-            id="field_ids = empty list"
+            id='field_ids = empty list',
         ),
         pytest.param(
             None,
@@ -355,16 +440,16 @@ async def test_list_elements(monkeypatch):
                 'ids': ['//1/t/01'],
                 'exids': ['//1/t/01'],
                 'workflows': ['~u/w'],
-                'exworkflows': ['~u2/w']
+                'exworkflows': ['~u2/w'],
             },
             {
                 'live': False,
                 'ids': [Tokens('//1/t/01')],
                 'exids': [Tokens('//1/t/01')],
                 'workflows': [Tokens('~u/w')],
-                'exworkflows': [Tokens('~u2/w')]
+                'exworkflows': [Tokens('~u2/w')],
             },
-            id="field_ids = None"
+            id='field_ids = None',
         ),
         pytest.param(
             '//2/t/01',
@@ -372,16 +457,16 @@ async def test_list_elements(monkeypatch):
                 'ids': ['//1/t/01'],
                 'exids': [],
                 'workflows': ['~u/w'],
-                'exworkflows': []
+                'exworkflows': [],
             },
             {
                 'live': False,
                 'ids': [Tokens('//2/t/01')],
                 'exids': [],
                 'workflows': [Tokens('~u/w')],
-                'exworkflows': []
+                'exworkflows': [],
             },
-            id="field_ids = str"
+            id='field_ids = str',
         ),
         pytest.param(
             {
@@ -392,24 +477,22 @@ async def test_list_elements(monkeypatch):
                 'ids': ['//1/t/01'],
                 'exids': [],
                 'workflows': ['~u/w'],
-                'exworkflows': []
+                'exworkflows': [],
             },
             {
                 'live': False,
                 'ids': [Tokens('//2/t/01'), Tokens('//2/t/02')],
                 'exids': [],
                 'workflows': [Tokens('~u/w')],
-                'exworkflows': []
+                'exworkflows': [],
             },
-            id="field_ids = dict"
-        )
-    ]
+            id='field_ids = dict',
+        ),
+    ],
 )
 async def test_get_elements(
-    monkeypatch: pytest.MonkeyPatch,
-    field_ids, kwargs, expected
+    monkeypatch: pytest.MonkeyPatch, field_ids, kwargs, expected
 ):
-
     # get_elements takes 2 args, root and info and kwargs.
     # Root always seems to be none
     root = None
@@ -417,20 +500,181 @@ async def test_get_elements(
     # functions that I'm not testing
     info = None
 
-    async def mock_return_list_elements(kwargs):
+    async def mock_return_list_elements(_query_type, kwargs):
         return kwargs
 
     def mock_process_resolver_info(*args):
         return None, field_ids
 
-    monkeypatch.setattr('cylc.uiserver.schema.list_elements',
-                        mock_return_list_elements)
-    monkeypatch.setattr('cylc.uiserver.schema.process_resolver_info',
-                        mock_process_resolver_info)
+    monkeypatch.setattr(
+        'cylc.uiserver.schema.list_elements',
+        mock_return_list_elements,
+    )
+    monkeypatch.setattr(
+        'cylc.uiserver.schema.process_resolver_info',
+        mock_process_resolver_info,
+    )
 
     assert await get_elements(
+        'tasks',
         root,
         info,
         live=False,
         **kwargs
     ) == expected
+
+
+async def test_job_query_filter():
+    def make_job(task_name, submit_status, run_status, started):
+        submit_start = submit_end = run_start = run_end = None
+        if submit_status:
+            submit_start = '2022-12-14T15:00:00Z'
+            submit_end = '2022-12-14T15:01:00Z'
+        if started:
+            run_start = '2022-12-14T15:02:00Z'
+        if run_status:
+            run_end = '2022-12-14T15:03:00Z'
+
+        return (
+            '1',
+            task_name,
+            '01',
+            '{1}',
+            0,
+            1,
+            submit_start,
+            submit_end,
+            submit_status,
+            run_start,
+            run_end,
+            run_status,  # run signal
+            run_status,
+            'MyPlatform',
+            'User',
+            'UsersJob',
+        )
+
+    # define a workflow with one job in each state
+    conn = make_db(
+        make_job('waiting', None, None, None),
+        make_job('submitted', 0, None, False),
+        make_job('submit-failed', 1, None, False),
+        make_job('running', 0, None, True),
+        make_job('succeeded', 0, 0, True),
+        make_job('failed', 0, 1, True),
+    )
+    workflow = Tokens('~user/workflow')
+
+    # all jobs should appear by default (no filters)
+    # Note: The waiting task has no associated job
+    assert {
+        item['id']['task'] for item in run_jobs_query(conn, workflow)
+    } == {
+        'submitted',
+        'submit-failed',
+        'running',
+        'succeeded',
+        'failed',
+    }
+
+    # filter by ids
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(conn, workflow, ids=[Tokens('//*/s*/01')])
+    } == {
+        'submitted',
+        'submit-failed',
+        'succeeded',
+    }
+
+    # filter by exids
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(conn, workflow, exids=[Tokens('//*/s*/01')])
+    } == {
+        'running',
+        'failed',
+    }
+
+    # filter by overlapping ids & exids
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(
+            conn,
+            workflow,
+            ids=[Tokens('//*/submitted'), Tokens('//*/succeeded')],
+            exids=[Tokens('//*/succeeded'), Tokens('//*/submit-failed')],
+        )
+    } == {
+        'submitted',
+    }
+
+    # filter by states
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(conn, workflow, states=['succeeded'])
+    } == {
+        'succeeded',
+    }
+
+    # quirk: cannot filter for waiting jobs (no such thing) so the filter is
+    # ignored
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(conn, workflow, states=['waiting'])
+    } == {
+        'submitted',
+        'submit-failed',
+        'running',
+        'succeeded',
+        'failed',
+    }
+
+    # filter by exstates
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(conn, workflow, exstates=['succeeded'])
+    } == {
+        'submitted',
+        'submit-failed',
+        'running',
+        'failed',
+    }
+    # quirk: cannot filter for waiting jobs (no such thing) so the filter is
+    # ignored
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(conn, workflow, exstates=['waiting'])
+    } == {
+        'submitted',
+        'submit-failed',
+        'running',
+        'succeeded',
+        'failed',
+    }
+
+    # filter by overlapping states and exstates
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(
+            conn,
+            workflow,
+            states=['submitted', 'succeeded'],
+            exstates=['succeeded', 'submit-failed']
+        )
+    } == {
+        'submitted',
+    }
+
+    # filter by namespace name
+    assert {
+        item['id']['task']
+        for item in run_jobs_query(
+            conn,
+            workflow,
+            tasks=['submit-failed', 'failed']
+        )
+    } == {
+        'submit-failed',
+        'failed',
+    }
