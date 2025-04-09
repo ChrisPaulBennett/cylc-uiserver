@@ -346,6 +346,7 @@ WITH data AS (
     tj.job_id,
     tj.platform_name,
     tj.time_submit,
+    tj.run_status,
     te.message as max_rss,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
@@ -473,58 +474,58 @@ GROUP BY name;
             'cycle_point': row[1],
             'submit_num': row[2],
             'state': _state_to_status(row[3], row[4], row[5]),
-            'started_time': row[5],
-            'finished_time': row[6],
-            'job_ID': row[7],
-            'platform': row[8],
-            'submitted_time': row[9],
+            'started_time': row[4],
+            'finished_time': row[5],
+            'job_ID': row[6],
+            'platform': row[7],
+            'submitted_time': row[8],
             # Queue time stats
-            'min_queue_time': row[10],
-            'mean_queue_time': row[11],
-            'max_queue_time': row[12],
-            'std_dev_queue_time': (row[13] - row[11]**2)**0.5,
+            'min_queue_time': row[9],
+            'mean_queue_time': row[10],
+            'max_queue_time': row[11],
+            'std_dev_queue_time': (row[12] - row[10]**2)**0.5,
             # Prevents null entries when there are too few tasks for quartiles
-            'queue_quartiles': [row[14],
-                                row[14] if row[15] is None else row[15],
-                                row[14] if row[16] is None else row[16]],
+            'queue_quartiles': [row[13],
+                                row[13] if row[14] is None else row[14],
+                                row[13] if row[15] is None else row[15]],
             # Run time stats
-            'min_run_time': row[17],
-            'mean_run_time': row[18],
-            'max_run_time': row[19],
-            'std_dev_run_time': (row[20] - row[18]**2)**0.5,
+            'min_run_time': row[16],
+            'mean_run_time': row[17],
+            'max_run_time': row[18],
+            'std_dev_run_time': (row[19] - row[17]**2)**0.5,
             # Prevents null entries when there are too few tasks for quartiles
-            'run_quartiles': [row[21],
-                              row[21] if row[22] is None else row[22],
-                              row[21] if row[23] is None else row[23]],
+            'run_quartiles': [row[20],
+                              row[20] if row[21] is None else row[21],
+                              row[20] if row[22] is None else row[22]],
             # Total
-            'min_total_time': row[24],
-            'mean_total_time': row[25],
-            'max_total_time': row[26],
-            'std_dev_total_time': (row[27] - row[25] ** 2) ** 0.5,
+            'min_total_time': row[23],
+            'mean_total_time': row[24],
+            'max_total_time': row[25],
+            'std_dev_total_time': (row[26] - row[24] ** 2) ** 0.5,
             # Prevents null entries when there are too few tasks for quartiles
-            'total_quartiles': [row[28],
-                                row[28] if row[29] is None else row[29],
-                                row[28] if row[30] is None else row[30]],
+            'total_quartiles': [row[27],
+                                row[27] if row[28] is None else row[28],
+                                row[27] if row[29] is None else row[29]],
             # Max RSS stats
-            'min_max_rss': row[31],
-            'mean_max_rss': row[32],
-            'max_max_rss': row[33],
-            'std_dev_max_rss': (row[34] - row[32] ** 2) ** 0.5,
+            'min_max_rss': row[30],
+            'mean_max_rss': row[31],
+            'max_max_rss': row[32],
+            'std_dev_max_rss': (row[33] - row[31] ** 2) ** 0.5,
             # Prevents null entries when there are too few tasks for quartiles
-            'max_rss_quartiles': [row[35],
-                                  row[35] if row[36] is None else row[36],
-                                  row[35] if row[37] is None else row[37]],
+            'max_rss_quartiles': [row[34],
+                                  row[34] if row[35] is None else row[35],
+                                  row[34] if row[36] is None else row[36]],
             # CPU time stats
-            'min_cpu_time': row[38],
-            'mean_cpu_time': row[39],
-            'max_cpu_time': row[40],
-            'total_cpu_time': row[41],
-            'std_dev_cpu_time': (row[42] - row[39] ** 2) ** 0.5,
+            'min_cpu_time': row[37],
+            'mean_cpu_time': row[38],
+            'max_cpu_time': row[39],
+            'total_cpu_time': row[40],
+            'std_dev_cpu_time': (row[41] - row[38] ** 2) ** 0.5,
             # Prevents null entries when there are too few tasks for quartiles
-            'cpu_time_quartiles': [row[43],
-                                   row[43] if row[44] is None else row[44],
-                                   row[43] if row[45] is None else row[45]],
-            'count': row[46]
+            'cpu_time_quartiles': [row[42],
+                                   row[42] if row[43] is None else row[43],
+                                   row[42] if row[44] is None else row[44]],
+            'count': row[45]
         })
 
     for task in tasks:
@@ -789,8 +790,7 @@ def run_jobs_query(
         WHERE te.message LIKE 'cpu_time%'
         '''
     if where_stmts:
-        query += 'WHERE\n            ' + '\n            AND '.join(where_stmts)
-
+        query += 'AND\n            ' + '\n            AND '.join(where_stmts)
     for row in conn.execute(query, where_args):
         # determine job status
         submit_status, run_status, time_run = row[3], row[12], row[4]
