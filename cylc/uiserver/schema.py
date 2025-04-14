@@ -756,9 +756,10 @@ def run_jobs_query(
     # build the SQL query
     query = r'''
 WITH data AS (
-    SELECT 
+    SELECT
         tj.*,
-        COALESCE(CAST(REPLACE(te.message, 'max_rss ', '') AS INT), 0) AS max_rss
+        COALESCE(CAST(REPLACE(te.message, 'max_rss ', '') AS INT), 0)
+            AS max_rss
     FROM
         task_jobs tj
     LEFT JOIN
@@ -775,11 +776,11 @@ SELECT
     data.job_id,
     data.platform_name,
     data.time_submit,
-    STRFTIME('%s', data.time_run_exit) - 
+    STRFTIME('%s', data.time_run_exit) -
         STRFTIME('%s', data.time_submit) AS total_time,
-    STRFTIME('%s', data.time_run_exit) - 
+    STRFTIME('%s', data.time_run_exit) -
         STRFTIME('%s', data.time_run) AS run_time,
-    STRFTIME('%s', data.time_run) - 
+    STRFTIME('%s', data.time_run) -
         STRFTIME('%s', data.time_submit) AS queue_time,
     data.run_status,
     data.max_rss,
