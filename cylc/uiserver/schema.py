@@ -764,7 +764,7 @@ def run_jobs_query(
             tj.submit_num = te.submit_num AND te.message LIKE 'max_rss%'
         WHERE
             tj.run_status = 0)
-            
+
         SELECT
             data.name,
             data.cycle,
@@ -775,15 +775,15 @@ def run_jobs_query(
             data.job_id,
             data.platform_name,
             data.time_submit,
-            STRFTIME('%s', data.time_run_exit) - STRFTIME('%s', data.time_submit)
-                AS total_time,
+            STRFTIME('%s', data.time_run_exit) - 
+            STRFTIME('%s', data.time_submit) AS total_time,
             STRFTIME('%s', data.time_run_exit) - STRFTIME('%s', data.time_run)
                 AS run_time,
             STRFTIME('%s', data.time_run) - STRFTIME('%s', data.time_submit)
                 AS queue_time,
             data.max_rss,
             CAST(REPLACE(te.message, 'cpu_time ', '') AS INT) AS cpu_time
-            
+
         FROM data
         LEFT JOIN task_events te ON data.name = te.name AND
         data.cycle = te.cycle AND data.submit_num = te.submit_num
