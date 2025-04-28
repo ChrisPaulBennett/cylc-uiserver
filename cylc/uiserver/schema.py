@@ -772,7 +772,7 @@ WITH data AS (
             SUBSTR(
                 te.message,
                 INSTR(te.message, 'cpu_time ') + 9,
-                INSTR(te.message, ' max_rss') - 
+                INSTR(te.message, ' max_rss') -
                 (INSTR(te.message, 'cpu_time ') + 9)
             ) AS INT
         ) AS cpu_time
