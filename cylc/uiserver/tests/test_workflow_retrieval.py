@@ -131,15 +131,7 @@ def test_make_task_query_1():
                 1,
                 '2022-12-14T15:10:00Z',
                 'message_debug',
-                'cpu_time 994'
-            ),
-            (
-                '1',
-                'Task_1',
-                1,
-                '2022-12-14T15:10:00Z',
-                'message_debug',
-                'max_rss 40064'
+                'cpu_time 994 max_rss 40064'
             )
         ]
     )
@@ -267,15 +259,7 @@ def test_make_task_query_2():
                 1,
                 '2022-12-14T15:10:00Z',
                 'message_debug',
-                'cpu_time 994'
-            ),
-            (
-                '1',
-                'Task_1',
-                1,
-                '2022-12-14T15:10:00Z',
-                'message_debug',
-                'max_rss 40064'
+                'cpu_time 994 max_rss 40064'
             ),
             (
                 '2',
@@ -307,15 +291,7 @@ def test_make_task_query_2():
                 1,
                 '2022-12-14T16:10:00Z',
                 'message_debug',
-                'cpu_time 1994'
-            ),
-            (
-                '2',
-                'Task_1',
-                1,
-                '2022-12-14T16:10:00Z',
-                'message_debug',
-                'max_rss 50064'
+                'cpu_time 1994 max_rss 50064'
             ),
         ]
     )
@@ -462,15 +438,7 @@ def test_make_task_query_3():
                 1,
                 '2022-12-14T15:10:00Z',
                 'message_debug',
-                'cpu_time 994'
-            ),
-            (
-                '1',
-                'Task_1',
-                1,
-                '2022-12-14T15:10:00Z',
-                'message_debug',
-                'max_rss 40064'
+                'cpu_time 994 max_rss 40064'
             ),
             (
                 '2',
@@ -502,15 +470,7 @@ def test_make_task_query_3():
                 1,
                 '2022-12-14T16:10:00Z',
                 'message_debug',
-                'cpu_time 1994'
-            ),
-            (
-                '2',
-                'Task_1',
-                1,
-                '2022-12-14T16:10:00Z',
-                'message_debug',
-                'max_rss 50064'
+                'cpu_time 1994 max_rss 50064'
             ),
             (
                 '3',
@@ -542,15 +502,7 @@ def test_make_task_query_3():
                 1,
                 '2022-12-14T17:10:00Z',
                 'message_debug',
-                'cpu_time 2994'
-            ),
-            (
-                '3',
-                'Task_1',
-                1,
-                '2022-12-14T17:10:00Z',
-                'message_debug',
-                'max_rss 60064'
+                'cpu_time 2994 max_rss 60064'
             ),
         ]
     )
@@ -697,15 +649,7 @@ def test_make_jobs_query_1():
                 1,
                 '2022-12-14T15:10:00Z',
                 'message_debug',
-                'cpu_time 994'
-            ),
-            (
-                '1',
-                'Task_1',
-                1,
-                '2022-12-14T15:10:00Z',
-                'message_debug',
-                'max_rss 40064'
+                'cpu_time 994 max_rss 40064'
             ),
             (
                 '2',
@@ -737,15 +681,7 @@ def test_make_jobs_query_1():
                 1,
                 '2022-12-14T16:10:00Z',
                 'message_debug',
-                'cpu_time 1994'
-            ),
-            (
-                '2',
-                'Task_1',
-                1,
-                '2022-12-14T16:10:00Z',
-                'message_debug',
-                'max_rss 50064'
+                'cpu_time 1994 max_rss 50064'
             ),
             (
                 '3',
@@ -777,15 +713,7 @@ def test_make_jobs_query_1():
                 1,
                 '2022-12-14T17:10:00Z',
                 'message_debug',
-                'cpu_time 2994'
-            ),
-            (
-                '3',
-                'Task_1',
-                1,
-                '2022-12-14T17:10:00Z',
-                'message_debug',
-                'max_rss 60064'
+                'cpu_time 2994 max_rss 60064'
             ),
         ]
     )

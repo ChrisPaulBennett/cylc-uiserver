@@ -800,10 +800,11 @@ SELECT
     data.run_status,
     data.max_rss,
     data.cpu_time
-FROM data;
+FROM data
         '''
     if where_stmts:
         query += 'WHERE\n            ' + '\n            AND '.join(where_stmts)
+    print(query)
     for row in conn.execute(query, where_args):
         # determine job status
         submit_status, run_status, time_run = row[3], row[12], row[4]
