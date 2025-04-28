@@ -347,22 +347,26 @@ WITH data AS (
     tj.platform_name,
     tj.time_submit,
     tj.run_status,
-    te.message as max_rss,
+    CAST(SUBSTR(te.message, INSTR(te.message, 'max_rss ')
+      + 8) AS INT) AS max_rss,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
     STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
   FROM task_jobs tj
   LEFT JOIN task_events te ON tj.name = te.name AND tj.cycle = te.cycle
   AND tj.submit_num = te.submit_num
-  WHERE te.message LIKE 'max_rss%'
+  WHERE te.message LIKE '%max_rss%'
 ),
 data1 AS (
   SELECT *,
-    te.message as cpu_time
+    CAST(SUBSTR(te.message,
+        INSTR(te.message, 'cpu_time ') + 9,
+        INSTR(te.message, ' max_rss') - (INSTR(te.message, 'cpu_time ') + 9)
+      ) AS INT ) AS cpu_time
   FROM data
   LEFT JOIN task_events te ON data.name = te.name AND data.cycle = te.cycle
   AND data.submit_num = te.submit_num
-  WHERE te.message LIKE 'cpu_time%'
+  WHERE te.message LIKE '%cpu_time%'
 ),
 data2 AS (
   SELECT
@@ -758,13 +762,24 @@ def run_jobs_query(
 WITH data AS (
     SELECT
         tj.*,
-        COALESCE(CAST(REPLACE(te.message, 'max_rss ', '') AS INT), 0)
-            AS max_rss
+        CAST(
+            SUBSTR(
+                te.message,
+                INSTR(te.message, 'max_rss ') + 8
+            ) AS INT
+        ) AS max_rss,
+        CAST(
+            SUBSTR(
+                te.message,
+                INSTR(te.message, 'cpu_time ') + 9,
+                INSTR(te.message, ' max_rss') - (INSTR(te.message, 'cpu_time ') + 9)
+            ) AS INT
+        ) AS cpu_time
     FROM
         task_jobs tj
     LEFT JOIN
         task_events te ON tj.name = te.name AND tj.cycle = te.cycle AND
-        tj.submit_num = te.submit_num AND te.message LIKE 'max_rss%'
+        tj.submit_num = te.submit_num AND te.message LIKE '%cpu_time%'
 )
 SELECT
     data.name,
@@ -784,11 +799,8 @@ SELECT
         STRFTIME('%s', data.time_submit) AS queue_time,
     data.run_status,
     data.max_rss,
-    COALESCE(CAST(REPLACE(te.message, 'cpu_time ', '') AS INT), 0) AS cpu_time
-FROM data
-LEFT JOIN task_events te ON data.name = te.name AND
-    data.cycle = te.cycle AND data.submit_num = te.submit_num
-    AND te.message LIKE 'cpu_time%'
+    data.cpu_time
+FROM data;
         '''
     if where_stmts:
         query += 'WHERE\n            ' + '\n            AND '.join(where_stmts)
