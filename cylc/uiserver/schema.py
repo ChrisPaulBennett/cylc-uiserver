@@ -413,7 +413,7 @@ SELECT
   MIN(queue_time) AS min_queue_time,
   CAST(AVG(queue_time) AS FLOAT) AS mean_queue_time,
   MAX(queue_time) AS max_queue_time,
-  CAST(AVG(queue_time * queue_time) AS INT) AS mean_squares_queue_time,
+  CAST(AVG(queue_time * queue_time) AS FLOAT) AS mean_squares_queue_time,
   MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END)
   AS queue_quartile_1,
   MAX(CASE WHEN queue_time_quartile = 2 THEN queue_time END)
@@ -425,7 +425,7 @@ SELECT
   MIN(run_time) AS min_run_time,
   CAST(AVG(run_time) AS FLOAT) AS mean_run_time,
   MAX(run_time) AS max_run_time,
-  CAST(AVG(run_time * run_time) AS INT) AS mean_squares_run_time,
+  CAST(AVG(run_time * run_time) AS FLOAT) AS mean_squares_run_time,
   MAX(CASE WHEN run_time_quartile = 1 THEN run_time END) AS run_quartile_1,
   MAX(CASE WHEN run_time_quartile = 2 THEN run_time END) AS run_quartile_2,
   MAX(CASE WHEN run_time_quartile = 3 THEN run_time END) AS run_quartile_3,
@@ -434,7 +434,7 @@ SELECT
   MIN(total_time) AS min_total_time,
   CAST(AVG(total_time) AS FLOAT) AS mean_total_time,
   MAX(total_time) AS max_total_time,
-  CAST(AVG(total_time * total_time) AS INT) AS mean_squares_total_time,
+  CAST(AVG(total_time * total_time) AS FLOAT) AS mean_squares_total_time,
   MAX(CASE WHEN total_time_quartile = 1 THEN total_time END)
   AS total_quartile_1,
   MAX(CASE WHEN total_time_quartile = 2 THEN total_time END)
@@ -446,7 +446,7 @@ SELECT
   MIN(max_rss) AS min_max_rss,
   CAST(AVG(max_rss) AS INT) AS mean_max_rss,
   MAX(max_rss) AS max_max_rss,
-  CAST(AVG(max_rss * max_rss) AS INT) AS mean_squares_max_rss,
+  CAST(AVG(max_rss * max_rss) AS FLOAT) AS mean_squares_max_rss,
   MAX(CASE WHEN max_rss_quartile = 1 THEN max_rss END) AS max_rss_quartile_1,
   MAX(CASE WHEN max_rss_quartile = 2 THEN max_rss END) AS max_rss_quartile_2,
   MAX(CASE WHEN max_rss_quartile = 3 THEN max_rss END) AS max_rss_quartile_3,
@@ -456,7 +456,7 @@ SELECT
   CAST(AVG(cpu_time) AS INT) AS mean_cpu_time,
   MAX(cpu_time) AS max_cpu_time,
   CAST(TOTAL(cpu_time) AS INT) AS total_cpu_time,
-  CAST(AVG(cpu_time * cpu_time) AS INT) AS mean_squares_cpu_time,
+  CAST(AVG(cpu_time * cpu_time) AS FLOAT) AS mean_squares_cpu_time,
   MAX(CASE WHEN cpu_time_quartile = 1 THEN cpu_time END)
   AS cpu_time_quartile_1,
   MAX(CASE WHEN cpu_time_quartile = 2 THEN cpu_time END)
