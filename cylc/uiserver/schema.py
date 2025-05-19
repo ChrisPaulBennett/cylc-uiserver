@@ -798,7 +798,7 @@ WITH data AS (
     LEFT JOIN
         task_events te ON tj.name = te.name AND tj.cycle = te.cycle AND
         tj.submit_num = te.submit_num AND te.message LIKE '%cpu_time%'
-)    
+)
         SELECT
             data.name,
             data.cycle AS cycle_point,
