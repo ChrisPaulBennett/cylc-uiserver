@@ -821,7 +821,8 @@ WITH data AS (
         FROM data
         '''
     if where_stmts:
-        query += 'WHERE ' + '            AND '.join(where_stmts)if jobNN:
+        query += 'WHERE ' + '            AND '.join(where_stmts)
+    if jobNN:
         query += ' GROUP BY name, cycle'
     for row in conn.execute(query, where_args):
         row = dict(row)
@@ -843,16 +844,19 @@ WITH data AS (
                 job=row['submit_num'],
             ),
             'state': status,
-            'started_time': row[4],
-            'finished_time': row[5],
-            'job_ID': row[6],
-            'platform': row[7],
-            'submitted_time': row[8],
-            'total_time': row[9],
-            'run_time': row[10],
-            'queue_time': row[11],
-            'max_rss': row[13],
-            'cpu_time': row[14]
+            'cycle_point': row['cycle_point'],
+            'started_time': row['started_time'],
+            'finished_time': row['finished_time'],
+            'job_ID': row['job_ID'],
+            'submit_num': row['submit_num'],
+            'name': row['name'],
+            'platform': row['platform'],
+            'submitted_time': row['submitted_time'],
+            'total_time': row['total_time'],
+            'run_time': row['run_time'],
+            'queue_time': row['queue_time'],
+            'max_rss': row['max_rss'],
+            'cpu_time': row['cpu_time']
         })
 
     return jobs

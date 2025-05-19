@@ -726,7 +726,6 @@ def test_make_jobs_query_1():
     return_value = run_jobs_query(conn, workflow, tasks)
 
     assert len(return_value) == 3
-
     assert return_value[0]['cycle_point'] == '1'
     assert return_value[0]['finished_time'] == '2022-12-14T15:10:00Z'
     assert return_value[0]['id'].id == '~user/workflow//1/Task_1/01'
@@ -1053,10 +1052,7 @@ async def test_jobNN_query(jobs, query, expected):
             'background',
             '1701',
         )
-
-    conn = make_db(
-        *(make_job(*job) for job in jobs)
-    )
+    conn = make_db(task_entries=(make_job(*job) for job in jobs))
     workflow = Tokens('~user/workflow')
     result = run_jobs_query(
         conn, workflow, ids=[Tokens(i, relative=True) for i in query]
