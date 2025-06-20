@@ -832,19 +832,7 @@ WITH data AS (
                 job=row['submit_num'],
             ),
             'state': status,
-            'cycle_point': row['cycle_point'],
-            'started_time': row['started_time'],
-            'finished_time': row['finished_time'],
-            'job_ID': row['job_ID'],
-            'submit_num': row['submit_num'],
-            'name': row['name'],
-            'platform': row['platform'],
-            'submitted_time': row['submitted_time'],
-            'total_time': row['total_time'],
-            'run_time': row['run_time'],
-            'queue_time': row['queue_time'],
-            'max_rss': row['max_rss'],
-            'cpu_time': row['cpu_time']
+            **row,
         })
 
     return jobs
