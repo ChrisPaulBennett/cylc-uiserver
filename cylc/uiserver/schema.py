@@ -718,19 +718,19 @@ def run_jobs_query(
             if submit_status is None:
                 # hasn't yet submitted (i.e. there is no job)
                 continue
-            item = [r'IFNULL(submit_status,999) = ?']
+            item = [r'IFNULL(data.submit_status,999) = ?']
             where_args.append(submit_status)
 
             if run_status is None:
                 item.append('run_status IS NULL')
             else:
-                item.append(r'IFNULL(run_status,999) = ?')
+                item.append(r'IFNULL(data.run_status,999) = ?')
                 where_args.append(run_status)
 
             if time_run is None:
-                item.append(r'time_run IS NULL')
+                item.append(r'data.time_run IS NULL')
             else:
-                item.append(r'time_run NOT NULL')
+                item.append(r'data.time_run NOT NULL')
 
             items.append(r'(' + ' AND '.join(item) + r')')
 
@@ -744,19 +744,19 @@ def run_jobs_query(
             if submit_status is None:
                 # hasn't yet submitted (i.e. there is no job)
                 continue
-            item = [r'IFNULL(submit_status,999) = ?']
+            item = [r'IFNULL(data.submit_status,999) = ?']
             where_args.append(submit_status)
 
             if run_status is None:
-                item.append(r'run_status IS NULL')
+                item.append(r'data.run_status IS NULL')
             else:
-                item.append(r'IFNULL(run_status,999) = ?')
+                item.append(r'IFNULL(data.run_status,999) = ?')
                 where_args.append(run_status)
 
             if time_run is None:
-                item.append(r'time_run IS NULL')
+                item.append(r'data.time_run IS NULL')
             else:
-                item.append(r'time_run NOT NULL')
+                item.append(r'data.time_run NOT NULL')
 
             where_stmts.append(r'NOT (' + ' AND '.join(item) + r')')
 
@@ -770,7 +770,7 @@ def run_jobs_query(
         where_args.extend(tasks)
 
     # build the SQL query
-    submit_num = 'max(submit_num)' if jobNN else 'submit_num'
+    submit_num = 'max(data.submit_num)' if jobNN else 'data.submit_num'
     query = rf'''
 WITH data AS (
     SELECT
