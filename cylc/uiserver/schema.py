@@ -811,7 +811,7 @@ WITH data AS (
     if where_stmts:
         query += 'WHERE ' + '            AND '.join(where_stmts)
     if jobNN:
-        query += ' GROUP BY name, cycle'
+        query += ' GROUP BY data.name, data.cycle'
     for row in conn.execute(query, where_args):
         row = dict(row)
         # determine job status
