@@ -359,7 +359,8 @@ WITH data AS (
     tj.platform_name,
     tj.time_submit,
     tj.run_status,
-    CAST(JSON_EXTRACT(te.message, '$.max_rss') AS INT) AS max_rss,
+    CAST(SUBSTR(te.message, INSTR(te.message, 'max_rss ')
+      + 8) AS INT) AS max_rss,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
     STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
@@ -370,7 +371,10 @@ WITH data AS (
 ),
 data1 AS (
   SELECT *,
-  CAST(JSON_EXTRACT(te.message, '$.cpu_time') AS INT) AS cpu_time
+  CAST(SUBSTR(te.message,
+        INSTR(te.message, 'cpu_time ') + 9,
+        INSTR(te.message, ' max_rss') - (INSTR(te.message, 'cpu_time ') + 9)
+      ) AS INT ) AS cpu_time
   FROM data
   LEFT JOIN task_events te ON data.name = te.name AND data.cycle = te.cycle
   AND data.submit_num = te.submit_num
@@ -776,11 +780,19 @@ WITH data AS (
     SELECT
         tj.*,
         CAST(
-            JSON_EXTRACT(te.message, '$.max_rss') AS INT
+            SUBSTR(
+                te.message,
+                INSTR(te.message, 'max_rss ') + 8
+            ) AS INT
         ) AS max_rss,
         CAST(
-            JSON_EXTRACT(te.message, '$.cpu_time') AS INT
-        ) AS cpu_time
+            SUBSTR(
+                te.message,
+                INSTR(te.message, 'cpu_time ') + 9,
+                INSTR(te.message, ' max_rss') -
+                (INSTR(te.message, 'cpu_time ') + 9)
+            ) AS INT
+        ) AS cpu_time,
     FROM
         task_jobs tj
     LEFT JOIN
