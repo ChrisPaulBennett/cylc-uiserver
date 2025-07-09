@@ -792,7 +792,7 @@ WITH data AS (
                 INSTR(te.message, ' max_rss') -
                 (INSTR(te.message, 'cpu_time ') + 9)
             ) AS INT
-        ) AS cpu_time,
+        ) AS cpu_time
     FROM
         task_jobs tj
     LEFT JOIN
