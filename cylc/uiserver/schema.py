@@ -359,24 +359,28 @@ WITH data AS (
     tj.platform_name,
     tj.time_submit,
     tj.run_status,
-    CASE 
-      WHEN te.event = 'message debug' THEN COALESCE(CAST(SUBSTR(te.message, INSTR(te.message, 'max_rss ') + 8) AS INT), 0)
+    CASE
+      WHEN te.event = 'message debug' THEN COALESCE(CAST(SUBSTR(te.message,
+      INSTR(te.message, 'max_rss ') + 8) AS INT), 0)
       ELSE 0
     END AS max_rss,
-    CASE 
-      WHEN te.event = 'message debug' THEN COALESCE(CAST(SUBSTR(te.message, INSTR(te.message, 'cpu_time ') + 9, INSTR(te.message, ' max_rss') - (INSTR(te.message, 'cpu_time ') + 9)) AS INT), 0)
+    CASE
+      WHEN te.event = 'message debug' THEN COALESCE(
+      CAST(SUBSTR(te.message, INSTR(te.message, 'cpu_time ') + 9,
+      INSTR(te.message, ' max_rss') - 
+      (INSTR(te.message, 'cpu_time ') + 9)) AS INT), 0)
       ELSE 0
     END AS cpu_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
     STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
-    FROM 
+    FROM
       task_jobs tj
     LEFT JOIN 
       task_events te
     ON 
-      tj.name = te.name 
-      AND tj.cycle = te.cycle 
+      tj.name = te.name
+      AND tj.cycle = te.cycle
       AND tj.submit_num = te.submit_num
   GROUP BY tj.name, tj.cycle, tj.submit_num, tj.platform_name
 ),
