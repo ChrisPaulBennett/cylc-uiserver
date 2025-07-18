@@ -502,7 +502,7 @@ GROUP BY name;
             'state': _state_to_status(row[3], row[4], row[5]),
             'started_time': row[5],
             'finished_time': row[6],
-            'job_ID': row[7],
+            'job_id': row[7],
             'platform': row[8],
             'submitted_time': row[9],
             # Queue time stats
@@ -815,7 +815,8 @@ WITH data AS (
             data.submit_status,
             data.time_run AS started_time,
             data.time_run_exit AS finished_time,
-            data.job_id AS job_ID,
+            data.job_id,
+            job_runner_name,
             data.platform_name AS platform,
             data.time_submit AS submitted_time,
             STRFTIME('%s', data.time_run_exit) -
