@@ -347,7 +347,7 @@ def run_task_query(conn, workflow):
     tasks = []
     total_of_totals = 0
     for row in conn.execute('''
-WITH data AS (
+WITH profiler_stats AS (
   SELECT
     tj.name,
     tj.cycle,
@@ -384,7 +384,7 @@ WITH data AS (
       AND tj.submit_num = te.submit_num
   GROUP BY tj.name, tj.cycle, tj.submit_num, tj.platform_name
 ),
-data2 AS (
+time_stats AS (
   SELECT
     name,
     cycle,
@@ -411,7 +411,7 @@ data2 AS (
     NTILE(4) OVER (PARTITION BY name ORDER BY CAST
     (TRIM(REPLACE(cpu_time, 'cpu_time ', '')) AS INT)) AS cpu_time_quartile,
     CAST(TRIM(REPLACE(cpu_time, 'cpu_time ', '')) AS INT) AS cpu_time
-  FROM data
+  FROM profiler_stats
 )
 SELECT
   name,
@@ -481,7 +481,7 @@ SELECT
   AS cpu_time_quartile_3,
 
   COUNT(*) AS n
-FROM data2
+FROM time_stats
 GROUP BY name;
 '''):
         total_of_totals += row[40]
