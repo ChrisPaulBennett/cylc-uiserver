@@ -367,7 +367,7 @@ WITH data AS (
     CASE
       WHEN te.event = 'message debug' THEN COALESCE(
       CAST(SUBSTR(te.message, INSTR(te.message, 'cpu_time ') + 9,
-      INSTR(te.message, ' max_rss') - 
+      INSTR(te.message, ' max_rss') -
       (INSTR(te.message, 'cpu_time ') + 9)) AS INT), 0)
       ELSE 0
     END AS cpu_time,
@@ -376,9 +376,9 @@ WITH data AS (
     STRFTIME('%s', time_run) - STRFTIME('%s', time_submit) AS queue_time
     FROM
       task_jobs tj
-    LEFT JOIN 
+    LEFT JOIN
       task_events te
-    ON 
+    ON
       tj.name = te.name
       AND tj.cycle = te.cycle
       AND tj.submit_num = te.submit_num
