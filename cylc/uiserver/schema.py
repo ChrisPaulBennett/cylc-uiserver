@@ -861,7 +861,7 @@ class UISTask(Task):
     min_total_time = graphene.Int()
     mean_total_time = graphene.Int()
     max_total_time = graphene.Int()
-    std_dev_total_time = graphene.Int()
+    std_dev_total_time = graphene.Float()
     total_quartiles = graphene.List(
         graphene.Int,
         description=sstrip('''
@@ -870,7 +870,7 @@ class UISTask(Task):
     min_queue_time = graphene.Int()
     mean_queue_time = graphene.Int()
     max_queue_time = graphene.Int()
-    std_dev_queue_time = graphene.Int()
+    std_dev_queue_time = graphene.Float()
     queue_quartiles = graphene.List(
         graphene.Int,
         description=sstrip('''
@@ -879,13 +879,13 @@ class UISTask(Task):
     min_run_time = graphene.Int()
     mean_run_time = graphene.Int()
     max_run_time = graphene.Int()
-    std_dev_run_time = graphene.Int()
+    std_dev_run_time = graphene.Float()
     run_quartiles = graphene.List(
         graphene.Int,
         description=sstrip('''
                 List containing the first, second,
                 third and forth quartile run times.'''))
-    max_rss = graphene.String()
+    max_rss = graphene.Int()
     min_max_rss = graphene.Int()
     mean_max_rss = graphene.Int()
     max_max_rss = graphene.Int()
@@ -899,7 +899,7 @@ class UISTask(Task):
     mean_cpu_time = graphene.Int()
     max_cpu_time = graphene.Int()
     total_cpu_time = graphene.Int()
-    std_dev_cpu_time = graphene.Int()
+    std_dev_cpu_time = graphene.Float()
     cpu_time_quartiles = graphene.List(
         graphene.Int,
         description=sstrip('''
