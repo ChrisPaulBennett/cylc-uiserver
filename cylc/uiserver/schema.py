@@ -487,7 +487,7 @@ SELECT
 
   COUNT(*) AS n
 FROM time_stats
-GROUP BY name;
+GROUP BY name, platform_name;
 '''):
         total_of_totals += row[40]
         tasks.append({
