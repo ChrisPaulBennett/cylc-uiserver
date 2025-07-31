@@ -432,7 +432,7 @@ SELECT
 
   -- Calculate Queue time stats
   MIN(queue_time) AS min_queue_time,
-  CAST(AVG(queue_time) AS FLOAT) AS mean_queue_time,
+  CAST(AVG(queue_time) AS INT) AS mean_queue_time,
   MAX(queue_time) AS max_queue_time,
   CAST(AVG(queue_time * queue_time) AS FLOAT) AS mean_squares_queue_time,
   MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END)
@@ -444,7 +444,7 @@ SELECT
 
   -- Calculate Run time stats
   MIN(run_time) AS min_run_time,
-  CAST(AVG(run_time) AS FLOAT) AS mean_run_time,
+  CAST(AVG(run_time) AS INT) AS mean_run_time,
   MAX(run_time) AS max_run_time,
   CAST(AVG(run_time * run_time) AS FLOAT) AS mean_squares_run_time,
   MAX(CASE WHEN run_time_quartile = 1 THEN run_time END) AS run_quartile_1,
@@ -453,7 +453,7 @@ SELECT
 
   -- Calculate Total time stats
   MIN(total_time) AS min_total_time,
-  CAST(AVG(total_time) AS FLOAT) AS mean_total_time,
+  CAST(AVG(total_time) AS INT) AS mean_total_time,
   MAX(total_time) AS max_total_time,
   CAST(AVG(total_time * total_time) AS FLOAT) AS mean_squares_total_time,
   MAX(CASE WHEN total_time_quartile = 1 THEN total_time END)
