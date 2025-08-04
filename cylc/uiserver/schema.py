@@ -434,7 +434,7 @@ SELECT
   MIN(queue_time) AS min_queue_time,
   CAST(AVG(queue_time) AS INT) AS mean_queue_time,
   MAX(queue_time) AS max_queue_time,
-  SQRT(AVG(queue_time * queue_time) - AVG(queue_time) * AVG(queue_time)) 
+  SQRT(AVG(queue_time * queue_time) - AVG(queue_time) * AVG(queue_time))
   AS stddev_queue_time,
   MAX(CASE WHEN queue_time_quartile = 1 THEN queue_time END)
   AS queue_quartile_1,
