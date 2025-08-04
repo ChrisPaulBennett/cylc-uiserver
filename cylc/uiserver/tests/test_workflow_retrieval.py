@@ -298,9 +298,9 @@ def test_make_task_query_2():
     assert ret['count'] == 2
     assert ret['cycle_point'] == '2'
     assert ret['finished_time'] == '2022-12-15T15:12:00Z'
-    assert ret['queue_quartiles'][0] == 60
-    assert ret['run_quartiles'][0] == 540
-    assert ret['total_quartiles'][0] == 600
+    assert ret['queue_quartiles'] == [60, 76, 60]
+    assert ret['run_quartiles'] == [540, 644, 540]
+    assert ret['total_quartiles'] == [600, 720, 600]
     assert ret['id'].id == '~user/workflow//2/Task_1/01'
     assert ret['job_id'] == 'UsersJob'
     assert ret['max_queue_time'] == 76
@@ -314,9 +314,6 @@ def test_make_task_query_2():
     assert ret['min_total_time'] == 600
     assert ret['name'] == 'Task_1'
     assert ret['platform'] == 'MyPlatform'
-    assert ret['queue_quartiles'][1] == 76
-    assert ret['run_quartiles'][1] == 644
-    assert ret['total_quartiles'][1] == 720
     assert ret['started_time'] == '2022-12-15T15:01:16Z'
     assert ret['state'] == 'succeeded'
     assert ret['std_dev_queue_time'] == pytest.approx(8.00, 0.01)
@@ -324,9 +321,6 @@ def test_make_task_query_2():
     assert ret['std_dev_total_time'] == pytest.approx(60.0, 0.01)
     assert ret['submit_num'] == 1
     assert ret['submitted_time'] == '2022-12-15T15:00:00Z'
-    assert ret['queue_quartiles'][2] == 60
-    assert ret['run_quartiles'][2] == 540
-    assert ret['total_quartiles'][2] == 600
 
 
 def test_make_task_query_3():
@@ -494,9 +488,9 @@ def test_make_task_query_3():
     assert ret['count'] == 3
     assert ret['cycle_point'] == '3'
     assert ret['finished_time'] == '2022-12-16T15:12:00Z'
-    assert ret['queue_quartiles'][0] == 60
-    assert ret['run_quartiles'][0] == 540
-    assert ret['total_quartiles'][0] == 600
+    assert ret['queue_quartiles'] == [60, 76, 76]
+    assert ret['run_quartiles'] == [540, 644, 644]
+    assert ret['total_quartiles'] == [600, 720, 720]
     assert ret['id'].id == '~user/workflow//3/Task_1/01'
     assert ret['job_id'] == 'UsersJob'
     assert ret['max_queue_time'] == 76
@@ -510,9 +504,6 @@ def test_make_task_query_3():
     assert ret['min_total_time'] == 600
     assert ret['name'] == 'Task_1'
     assert ret['platform'] == 'MyPlatform'
-    assert ret['queue_quartiles'][1] == 76
-    assert ret['run_quartiles'][1] == 644
-    assert ret['total_quartiles'][1] == 720
     assert ret['started_time'] == '2022-12-16T15:01:16Z'
     assert ret['state'] == 'succeeded'
     assert ret['std_dev_queue_time'] == pytest.approx(7.54, 0.01)
@@ -520,9 +511,6 @@ def test_make_task_query_3():
     assert ret['std_dev_total_time'] == pytest.approx(56.56, 0.01)
     assert ret['submit_num'] == 1
     assert ret['submitted_time'] == '2022-12-16T15:00:00Z'
-    assert ret['queue_quartiles'][2] == 76
-    assert ret['run_quartiles'][2] == 644
-    assert ret['total_quartiles'][2] == 720
 
 
 def test_make_task_query_different_platforms():
