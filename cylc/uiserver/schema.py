@@ -366,14 +366,21 @@ WITH profiler_stats AS (
     tj.run_status,
     CASE
       WHEN te.event = 'message debug' THEN COALESCE(CAST(SUBSTR(te.message,
-      INSTR(te.message, 'max_rss ') + 8) AS INT), 0)
+      INSTR(te.message, 'mem_alloc ') + 10) AS INT), 0)
+      ELSE 0
+    END AS mem_alloc,
+    CASE
+      WHEN te.event = 'message debug' THEN COALESCE(
+      CAST(SUBSTR(te.message, INSTR(te.message, 'max_rss ') + 8,
+      INSTR(te.message, ' mem_alloc') -
+      (INSTR(te.message, 'max_rss ') + 9)) AS INT), 0)
       ELSE 0
     END AS max_rss,
     CASE
       WHEN te.event = 'message debug' THEN COALESCE(
       CAST(SUBSTR(te.message, INSTR(te.message, 'cpu_time ') + 9,
       INSTR(te.message, ' max_rss') -
-      (INSTR(te.message, 'cpu_time ') + 9)) AS INT), 0)
+      (INSTR(te.message, 'cpu_time ') + 8)) AS INT), 0)
       ELSE 0
     END AS cpu_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
@@ -404,6 +411,7 @@ time_stats AS (
     queue_time,
     run_time,
     total_time,
+    mem_alloc,
     NTILE(4) OVER (PARTITION BY name ORDER BY queue_time)
     AS queue_time_quartile,
     NTILE(4) OVER (PARTITION BY name ORDER BY run_time)
@@ -429,6 +437,7 @@ SELECT
   job_id,
   platform_name,
   time_submit,
+  mem_alloc,
 
   -- Calculate Queue time stats
   MIN(queue_time) AS min_queue_time,
@@ -510,53 +519,54 @@ GROUP BY name, platform_name;
             'job_id': row[7],
             'platform': row[8],
             'submitted_time': row[9],
+            'mem_alloc': row[10],
             # Queue time stats
-            'min_queue_time': row[10],
-            'mean_queue_time': row[11],
-            'max_queue_time': row[12],
-            'std_dev_queue_time': row[13],
+            'min_queue_time': row[11],
+            'mean_queue_time': row[12],
+            'max_queue_time': row[13],
+            'std_dev_queue_time': row[14],
             # Prevents null entries when there are too few tasks for quartiles
-            'queue_quartiles': [row[14],
-                                row[14] if row[15] is None else row[15],
-                                row[14] if row[16] is None else row[16]],
+            'queue_quartiles': [row[15],
+                                row[15] if row[16] is None else row[16],
+                                row[15] if row[17] is None else row[17]],
             # Run time stats
-            'min_run_time': row[17],
-            'mean_run_time': row[18],
-            'max_run_time': row[19],
-            'std_dev_run_time': row[20],
+            'min_run_time': row[18],
+            'mean_run_time': row[19],
+            'max_run_time': row[20],
+            'std_dev_run_time': row[21],
             # Prevents null entries when there are too few tasks for quartiles
-            'run_quartiles': [row[21],
-                              row[21] if row[22] is None else row[22],
-                              row[21] if row[23] is None else row[23]],
+            'run_quartiles': [row[22],
+                              row[22] if row[23] is None else row[23],
+                              row[22] if row[24] is None else row[24]],
             # Total
-            'min_total_time': row[24],
-            'mean_total_time': row[25],
-            'max_total_time': row[26],
-            'std_dev_total_time': row[27],
+            'min_total_time': row[25],
+            'mean_total_time': row[26],
+            'max_total_time': row[27],
+            'std_dev_total_time': row[28],
             # Prevents null entries when there are too few tasks for quartiles
-            'total_quartiles': [row[28],
-                                row[28] if row[29] is None else row[29],
-                                row[28] if row[30] is None else row[30]],
+            'total_quartiles': [row[29],
+                                row[29] if row[30] is None else row[30],
+                                row[29] if row[31] is None else row[31]],
             # Max RSS stats
-            'min_max_rss': row[31],
-            'mean_max_rss': row[32],
-            'max_max_rss': row[33],
-            'std_dev_max_rss': row[34],
+            'min_max_rss': row[32],
+            'mean_max_rss': row[33],
+            'max_max_rss': row[34],
+            'std_dev_max_rss': row[35],
             # Prevents null entries when there are too few tasks for quartiles
-            'max_rss_quartiles': [row[35],
-                                  row[35] if row[36] is None else row[36],
-                                  row[35] if row[37] is None else row[37]],
+            'max_rss_quartiles': [row[36],
+                                  row[36] if row[37] is None else row[37],
+                                  row[36] if row[38] is None else row[38]],
             # CPU time stats
-            'min_cpu_time': row[38],
-            'mean_cpu_time': row[39],
-            'max_cpu_time': row[40],
-            'total_cpu_time': row[41],
-            'std_dev_cpu_time': row[42],
+            'min_cpu_time': row[39],
+            'mean_cpu_time': row[40],
+            'max_cpu_time': row[41],
+            'total_cpu_time': row[42],
+            'std_dev_cpu_time': row[43],
             # Prevents null entries when there are too few tasks for quartiles
-            'cpu_time_quartiles': [row[43],
-                                   row[43] if row[44] is None else row[44],
-                                   row[43] if row[45] is None else row[45]],
-            'count': row[46]
+            'cpu_time_quartiles': [row[44],
+                                   row[44] if row[45] is None else row[45],
+                                   row[44] if row[46] is None else row[46]],
+            'count': row[47]
         })
 
     for task in tasks:
@@ -796,7 +806,15 @@ WITH data AS (
         CAST(
             SUBSTR(
                 te.message,
-                INSTR(te.message, 'max_rss ') + 8
+                INSTR(te.message, 'mem_alloc ') + 10
+            ) AS INT
+        ) AS mem_alloc,
+        CAST(
+            SUBSTR(
+                te.message,
+                INSTR(te.message, 'max_rss ') + 9,
+                INSTR(te.message, ' mem_alloc') -
+                (INSTR(te.message, 'max_rss ') + 9)
             ) AS INT
         ) AS max_rss,
         CAST(
@@ -832,7 +850,8 @@ WITH data AS (
                 STRFTIME('%s', data.time_submit) AS queue_time,
             data.run_status,
             data.max_rss,
-            data.cpu_time
+            data.cpu_time,
+            data.mem_alloc
         FROM data
         '''
     if where_stmts:
@@ -917,6 +936,7 @@ class UISTask(Task):
                 List containing the first, second,
                 third and forth quartile for CPU time.'''))
     total_of_totals = graphene.Int()
+    mem_alloc = graphene.Int()
     count = graphene.Int()
 
 
