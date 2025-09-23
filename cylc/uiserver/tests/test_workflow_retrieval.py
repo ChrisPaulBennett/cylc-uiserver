@@ -137,7 +137,7 @@ def test_make_task_query_1():
                 1,
                 '2022-12-14T15:10:00Z',
                 'message debug',
-                'cpu_time 994 max_rss 40064'
+                'cpu_time 994 max_rss 40064 mem_alloc 1048576'
             )
         ]
     )
@@ -181,6 +181,7 @@ def test_make_task_query_1():
     assert ret['std_dev_cpu_time'] == pytest.approx(0.0, 0.01)
     assert ret['submit_num'] == 1
     assert ret['submitted_time'] == '2022-12-14T15:00:00Z'
+    assert ret['mem_alloc'] == 1048576
 
 
 def test_make_task_query_2():
