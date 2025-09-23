@@ -373,7 +373,7 @@ WITH profiler_stats AS (
       WHEN te.event = 'message debug' THEN COALESCE(
       CAST(SUBSTR(te.message, INSTR(te.message, 'max_rss ') + 8,
       INSTR(te.message, ' mem_alloc') -
-      (INSTR(te.message, 'max_rss ') + 9)) AS INT), 0)
+      (INSTR(te.message, 'max_rss ') + 8)) AS INT), 0)
       ELSE 0
     END AS max_rss,
     CASE
