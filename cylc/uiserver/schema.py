@@ -384,15 +384,10 @@ def run_task_query(conn, workflow):
 WITH profiler_stats AS (
   SELECT
     tj.name,
-    tj.cycle,
-    tj.submit_num,
-    tj.submit_status,
     tj.time_run,
     tj.time_run_exit,
-    tj.job_id,
     tj.platform_name,
     tj.time_submit,
-    tj.run_status,
     JSON_EXTRACT(SUBSTR(te.message, 17), '$.memory_allocated') AS mem_alloc,
     JSON_EXTRACT(SUBSTR(te.message, 17), '$.max_rss') AS max_rss,
     JSON_EXTRACT(SUBSTR(te.message, 17), '$.cpu_time') AS cpu_time,
@@ -413,11 +408,8 @@ WITH profiler_stats AS (
 time_stats AS (
   SELECT
     name,
-    submit_status,
-    run_status,
     time_run,
     time_run_exit,
-    job_id,
     platform_name,
     time_submit,
     queue_time,
