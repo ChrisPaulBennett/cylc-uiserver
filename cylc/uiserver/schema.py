@@ -486,7 +486,7 @@ SELECT
   MIN(cpu_time) AS min_cpu_time,
   AVG(cpu_time) AS mean_cpu_time,
   MAX(cpu_time) AS max_cpu_time,
-  TOTAL(cpu_time) AS total_cpu_time,
+  SUM(cpu_time) AS total_cpu_time,
   SQRT(AVG(cpu_time * cpu_time) - AVG(cpu_time) * AVG(cpu_time))
   AS stddev_cpu_time,
   MAX(CASE WHEN cpu_time_quartile = 1 THEN cpu_time END)
@@ -931,7 +931,6 @@ class UISTask(Task):
                 List containing the first, second,
                 third and forth quartile run times.'''),
     )
-    peak_rss = graphene.BigInt()
     min_peak_rss = graphene.BigInt()
     mean_peak_rss = graphene.Float()
     max_peak_rss = graphene.BigInt()
