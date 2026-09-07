@@ -389,7 +389,7 @@ WITH profiler_stats AS (
     tj.platform_name,
     tj.time_submit,
     JSON_EXTRACT(SUBSTR(te.message, 17), '$.memory_allocated') AS mem_alloc,
-    JSON_EXTRACT(SUBSTR(te.message, 17), '$.max_rss') AS max_rss,
+    JSON_EXTRACT(SUBSTR(te.message, 17), '$.max_rss') AS peak_rss,
     JSON_EXTRACT(SUBSTR(te.message, 17), '$.cpu_time') AS cpu_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_submit) AS total_time,
     STRFTIME('%s', time_run_exit) - STRFTIME('%s', time_run) AS run_time,
@@ -422,8 +422,8 @@ time_stats AS (
     AS run_time_quartile,
     NTILE(4) OVER (PARTITION BY name ORDER BY total_time)
     AS total_time_quartile,
-    NTILE(4) OVER (PARTITION BY name ORDER BY max_rss) AS max_rss_quartile,
-    max_rss,
+    NTILE(4) OVER (PARTITION BY name ORDER BY peak_rss) AS peak_rss_quartile,
+    peak_rss,
     NTILE(4) OVER (PARTITION BY name ORDER BY cpu_time) AS cpu_time_quartile,
     cpu_time
   FROM profiler_stats
@@ -470,14 +470,17 @@ SELECT
   AS total_quartile_3,
 
   -- Calculate RSS stats
-  MIN(max_rss) AS min_max_rss,
-  AVG(max_rss) AS mean_max_rss,
-  MAX(max_rss) AS max_max_rss,
-  SQRT(AVG(max_rss * max_rss) - AVG(max_rss) * AVG(max_rss))
-  AS stddev_max_rss,
-  MAX(CASE WHEN max_rss_quartile = 1 THEN max_rss END) AS max_rss_quartile_1,
-  MAX(CASE WHEN max_rss_quartile = 2 THEN max_rss END) AS max_rss_quartile_2,
-  MAX(CASE WHEN max_rss_quartile = 3 THEN max_rss END) AS max_rss_quartile_3,
+  MIN(peak_rss) AS min_peak_rss,
+  AVG(peak_rss) AS mean_peak_rss,
+  MAX(peak_rss) AS max_peak_rss,
+  SQRT(AVG(peak_rss * peak_rss) - AVG(peak_rss) * AVG(peak_rss))
+  AS stddev_peak_rss,
+  MAX(CASE WHEN peak_rss_quartile = 1 THEN peak_rss END)
+  AS peak_rss_quartile_1,
+  MAX(CASE WHEN peak_rss_quartile = 2 THEN peak_rss END)
+  AS peak_rss_quartile_2,
+  MAX(CASE WHEN peak_rss_quartile = 3 THEN peak_rss END)
+  AS peak_rss_quartile_3,
 
   -- Calculate CPU time
   MIN(cpu_time) AS min_cpu_time,
@@ -522,23 +525,23 @@ GROUP BY name, platform_name;
                 'std_dev_total_time': row["stddev_total_time"],
                 'total_quartiles': get_quartiles(row, 'total'),
                 # Max RSS stats
-                'min_max_rss': row["min_max_rss"],
-                'mean_max_rss': row["mean_max_rss"],
-                'max_max_rss': row["max_max_rss"],
-                'std_dev_max_rss': row["stddev_max_rss"],
+                'min_peak_rss': row["min_peak_rss"],
+                'mean_peak_rss': row["mean_peak_rss"],
+                'max_peak_rss': row["max_peak_rss"],
+                'std_dev_peak_rss': row["stddev_peak_rss"],
                 # Prevents null entries when there are too few
                 # tasks for quartiles
-                'max_rss_quartiles': [
-                    row["max_rss_quartile_1"],
+                'peak_rss_quartiles': [
+                    row["peak_rss_quartile_1"],
                     (
-                        row["max_rss_quartile_1"]
-                        if row["max_rss_quartile_2"] is None
-                        else row["max_rss_quartile_2"]
+                        row["peak_rss_quartile_1"]
+                        if row["peak_rss_quartile_2"] is None
+                        else row["peak_rss_quartile_2"]
                     ),
                     (
-                        row["max_rss_quartile_1"]
-                        if row["max_rss_quartile_3"] is None
-                        else row["max_rss_quartile_3"]
+                        row["peak_rss_quartile_1"]
+                        if row["peak_rss_quartile_3"] is None
+                        else row["peak_rss_quartile_3"]
                     ),
                 ],
                 # CPU time stats
@@ -828,7 +831,7 @@ def run_jobs_query(
         'mem_alloc': '''
             JSON_EXTRACT(SUBSTR(te.message, 17), '$.memory_allocated')
         ''',
-        'max_rss': '''
+        'peak_rss': '''
             JSON_EXTRACT(SUBSTR(te.message, 17), '$.max_rss')
         ''',
         'cpu_time': '''
@@ -849,7 +852,7 @@ def run_jobs_query(
         FROM
             task_jobs tj
     '''
-    if {'mem_alloc', 'max_rss', 'cpu_time'} & set(fields):
+    if {'mem_alloc', 'peak_rss', 'cpu_time'} & set(fields):
         query += '''
         LEFT JOIN
             task_events te
@@ -928,16 +931,16 @@ class UISTask(Task):
                 List containing the first, second,
                 third and forth quartile run times.'''),
     )
-    max_rss = graphene.BigInt()
-    min_max_rss = graphene.BigInt()
-    mean_max_rss = graphene.Float()
-    max_max_rss = graphene.BigInt()
-    std_dev_max_rss = graphene.Float()
-    max_rss_quartiles = graphene.List(
+    peak_rss = graphene.BigInt()
+    min_peak_rss = graphene.BigInt()
+    mean_peak_rss = graphene.Float()
+    max_peak_rss = graphene.BigInt()
+    std_dev_peak_rss = graphene.Float()
+    peak_rss_quartiles = graphene.List(
         graphene.BigInt,
         description=sstrip('''
                 List containing the first, second,
-                third and forth quartile for Max RSS.'''),
+                third and forth quartile for Peak RSS.'''),
     )
     min_cpu_time = graphene.Int()
     mean_cpu_time = graphene.Float()
@@ -960,7 +963,7 @@ class UISJob(Job):
     total_time = graphene.Int()
     queue_time = graphene.Int()
     run_time = graphene.Int()
-    max_rss = graphene.Int()
+    peak_rss = graphene.Int()
     cpu_time = graphene.Int()
 
 
