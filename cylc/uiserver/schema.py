@@ -500,7 +500,7 @@ SELECT
 FROM time_stats
 GROUP BY name, platform_name;
 '''):
-        total_of_totals += row['total_cpu_time']
+        total_of_totals += row['total_cpu_time'] or 0
         tasks.append(
             {
                 'name': row["name"],
