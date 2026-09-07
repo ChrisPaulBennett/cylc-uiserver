@@ -834,19 +834,13 @@ def run_jobs_query(
         ''',
         'run_status': 'tj.run_status',
         'mem_alloc': '''
-            COALESCE(
-                JSON_EXTRACT(SUBSTR(te.message, 17), '$.memory_allocated'), 0
-            )
+            JSON_EXTRACT(SUBSTR(te.message, 17), '$.memory_allocated')
         ''',
         'max_rss': '''
-            COALESCE(
-                JSON_EXTRACT(SUBSTR(te.message, 17), '$.max_rss'), 0
-            )
+            JSON_EXTRACT(SUBSTR(te.message, 17), '$.max_rss')
         ''',
         'cpu_time': '''
-            COALESCE(
-                JSON_EXTRACT(SUBSTR(te.message, 17), '$.cpu_time'), 0
-            )
+            JSON_EXTRACT(SUBSTR(te.message, 17), '$.cpu_time')
         ''',
     }
 
