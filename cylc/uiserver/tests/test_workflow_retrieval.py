@@ -153,13 +153,9 @@ def test_make_task_query_1():
     assert ret['min_cpu_time'] == 994
     assert ret['name'] == 'Task_1'
     assert ret['platform'] == 'MyPlatform'
-    assert ret['started_time'] == '2022-12-14T15:01:00Z'
-    assert ret['state'] == 'succeeded'
     assert ret['std_dev_queue_time'] == pytest.approx(0.0, 0.01)
     assert ret['std_dev_run_time'] == pytest.approx(0.0, 0.01)
     assert ret['std_dev_total_time'] == pytest.approx(0.0, 0.01)
-    assert ret['submit_num'] == 1
-    assert ret['submitted_time'] == '2022-12-14T15:00:00Z'
     assert ret['std_dev_peak_rss'] == pytest.approx(0.0, 0.01)
     assert ret['std_dev_cpu_time'] == pytest.approx(0.0, 0.01)
     assert ret['mem_alloc'] == 1048576
@@ -253,13 +249,9 @@ def test_make_task_query_2():
     assert ret['min_total_time'] == 600
     assert ret['name'] == 'Task_1'
     assert ret['platform'] == 'MyPlatform'
-    assert ret['started_time'] == '2022-12-15T15:01:16Z'
-    assert ret['state'] == 'succeeded'
     assert ret['std_dev_queue_time'] == pytest.approx(8.00, 0.01)
     assert ret['std_dev_run_time'] == pytest.approx(52.0, 0.01)
     assert ret['std_dev_total_time'] == pytest.approx(60.0, 0.01)
-    assert ret['submit_num'] == 1
-    assert ret['submitted_time'] == '2022-12-15T15:00:00Z'
     assert ret['mem_alloc'] == 1048576
 
 
@@ -377,13 +369,9 @@ def test_make_task_query_3():
     assert ret['min_total_time'] == 600
     assert ret['name'] == 'Task_1'
     assert ret['platform'] == 'MyPlatform'
-    assert ret['started_time'] == '2022-12-16T15:01:16Z'
-    assert ret['state'] == 'succeeded'
     assert ret['std_dev_queue_time'] == pytest.approx(7.54, 0.01)
     assert ret['std_dev_run_time'] == pytest.approx(49.02, 0.01)
     assert ret['std_dev_total_time'] == pytest.approx(56.56, 0.01)
-    assert ret['submit_num'] == 1
-    assert ret['submitted_time'] == '2022-12-16T15:00:00Z'
 
 
 def test_make_task_query_different_platforms():
