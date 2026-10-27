@@ -277,7 +277,8 @@ class ReinstallReload(graphene.Mutation):
         resolver = partial(mutator, command='validate_reinstall')
 
     class Arguments(Reinstall.Arguments, Reload.Arguments):
-        """Compound command inherits arguments from the subcommands it proxies."""
+        """Compound command inherits arguments from the subcommands it proxies.
+        """
 
     result = GenericScalar()
 
@@ -295,7 +296,8 @@ class ReinstallRestart(graphene.Mutation):
         resolver = partial(mutator, command='validate_reinstall')
 
     class Arguments(Reinstall.Arguments, Play.Arguments):
-        """Compound command inherits arguments from the subcommands it proxies."""
+        """Compound command inherits arguments from the subcommands it proxies.
+        """
 
     result = GenericScalar()
 
