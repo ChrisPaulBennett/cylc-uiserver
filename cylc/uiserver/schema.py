@@ -234,13 +234,13 @@ class Reinstall:
             graphene.String,
             description=sstrip('''
                 Add Rose optional configurations (if Rose is used).
-            ''')
+            '''),
         )
         clear_rose_install_options = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Clear options previous set by cylc-rose.
-            ''')
+            '''),
         )
         rose_suite_defines = graphene.List(
             graphene.String,
@@ -250,7 +250,7 @@ class Reinstall:
 
                 Can be used to disable a setting using the syntax
                 `[SECTION]!KEY` or even `[!SECTION]`.
-            ''')
+            '''),
         )
         rose_template_variables = graphene.List(
             graphene.String,
@@ -260,7 +260,7 @@ class Reinstall:
                 Note: Specifying `FOO=1` to this argument is equivalent to
                 specifying `[template variables]FOO=1` to the `define`
                 argument.
-            ''')
+            '''),
         )
 
 
@@ -277,8 +277,7 @@ class ReinstallReload(graphene.Mutation):
         resolver = partial(mutator, command='validate_reinstall')
 
     class Arguments(Reinstall.Arguments, Reload.Arguments):
-        """Compound command inherits arguments from the subcommands it proxies.
-        """
+        """Compound command inherits arguments from the subcommands it proxies."""
 
     result = GenericScalar()
 
@@ -296,8 +295,7 @@ class ReinstallRestart(graphene.Mutation):
         resolver = partial(mutator, command='validate_reinstall')
 
     class Arguments(Reinstall.Arguments, Play.Arguments):
-        """Compound command inherits arguments from the subcommands it proxies.
-        """
+        """Compound command inherits arguments from the subcommands it proxies."""
 
     result = GenericScalar()
 
@@ -437,13 +435,21 @@ def get_quartiles(row, prop: str) -> List[Optional[float]]:
     """Return the [Q1, Q2, Q3] values of a property for a task.
 
     Any quartile which could not be calculated (e.g. because there were too
-    few jobs) falls back to the first quartile which could be calculated.
-    This prevents null entries being returned when there is data available.
+    few jobs) falls back to the nearest lower quartile which could be
+    calculated (or the nearest higher one if there is no lower one).
+    This prevents null entries being returned when there is data available
+    whilst keeping the quartiles in ascending order.
     """
     quartiles = [row[f"{prop}_quartile_{index}"] for index in (1, 2, 3)]
-    fallback = next(
-        (value for value in quartiles if value is not None), None
-    )
+    # fill forwards from the nearest lower quartile
+    previous = None
+    for index, value in enumerate(quartiles):
+        if value is None:
+            quartiles[index] = previous
+        else:
+            previous = value
+    # fill any leading gaps backwards from the first available quartile
+    fallback = next((value for value in quartiles if value is not None), None)
     return [fallback if value is None else value for value in quartiles]
 
 

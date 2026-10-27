@@ -27,11 +27,57 @@ import pytest
 
 from cylc.uiserver.schema import (
     get_elements,
+    get_quartiles,
     list_elements,
     run_jobs_query,
     run_task_query,
     schema,
 )
+
+
+def _quartile_row(prop, q1, q2, q3):
+    """Create a fake DB row containing quartile columns for a property."""
+    return {
+        f'{prop}_quartile_1': q1,
+        f'{prop}_quartile_2': q2,
+        f'{prop}_quartile_3': q3,
+    }
+
+
+@pytest.mark.parametrize(
+    'quartiles, expected',
+    [
+        pytest.param([1, 2, 3], [1, 2, 3], id='all-present'),
+        pytest.param([None, None, None], [None, None, None], id='all-null'),
+        pytest.param([5, None, None], [5, 5, 5], id='only-q1'),
+        pytest.param([None, 7, None], [7, 7, 7], id='only-q2'),
+        pytest.param([None, None, 9], [9, 9, 9], id='only-q3'),
+        pytest.param([60, 76, None], [60, 76, 76], id='q3-missing'),
+        pytest.param([None, 4, 8], [4, 4, 8], id='q1-missing'),
+        pytest.param([3, None, 8], [3, 3, 8], id='q2-missing'),
+        pytest.param([0, None, None], [0, 0, 0], id='zero-is-not-null'),
+        pytest.param([None, 0, 2], [0, 0, 2], id='zero-fallback'),
+        pytest.param([1.5, None, 2.5], [1.5, 1.5, 2.5], id='floats'),
+    ],
+)
+def test_get_quartiles(quartiles, expected):
+    """It should fill null quartiles from the nearest lower quartile,
+    or the nearest higher one if there is no lower one."""
+    row = _quartile_row('run', *quartiles)
+    assert get_quartiles(row, 'run') == expected
+
+
+def test_get_quartiles_sqlite_row():
+    """It should work with sqlite3."""
+    conn = sqlite3.connect(':memory:')
+    conn.row_factory = sqlite3.Row
+    row = conn.execute(
+        'SELECT 10 AS cpu_time_quartile_1,'
+        ' NULL AS cpu_time_quartile_2,'
+        ' 30 AS cpu_time_quartile_3'
+    ).fetchone()
+    assert get_quartiles(row, 'cpu_time') == [10, 10, 30]
+    conn.close()
 
 
 def make_db(task_entries, task_events=None):
@@ -235,9 +281,9 @@ def test_make_task_query_2():
     ret = run_task_query(conn, workflow)[0]
 
     assert ret['count'] == 2
-    assert ret['queue_quartiles'] == [60, 76, 60]
-    assert ret['run_quartiles'] == [540, 644, 540]
-    assert ret['total_quartiles'] == [600, 720, 600]
+    assert ret['queue_quartiles'] == [60, 76, 76]
+    assert ret['run_quartiles'] == [540, 644, 644]
+    assert ret['total_quartiles'] == [600, 720, 720]
     assert ret['max_queue_time'] == 76
     assert ret['max_run_time'] == 644
     assert ret['max_total_time'] == 720
