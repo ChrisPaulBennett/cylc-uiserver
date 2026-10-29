@@ -80,6 +80,7 @@ from cylc.uiserver.resolvers import (
     stream_log,
 )
 
+
 if TYPE_CHECKING:
     from graphql import GraphQLResolveInfo
 
@@ -90,7 +91,7 @@ async def mutator(
     *,
     command: str,
     workflows: Optional[List[str]] = None,
-    **kwargs: Any,
+    **kwargs: Any
 ):
     """Call the resolver method that act on the workflow service
     via the internal command queue."""
@@ -101,9 +102,9 @@ async def mutator(
         kwargs.update(kwargs.get('args', {}))
         kwargs.pop('args')
 
-    resolvers: 'Resolvers' = info.context.get(
-        'resolvers'
-    )  # type: ignore[union-attr]
+    resolvers: 'Resolvers' = (
+        info.context.get('resolvers')  # type: ignore[union-attr]
+    )
     try:
         res = await resolvers.service(info, command, parsed_workflows, kwargs)
     except Exception as exc:
@@ -128,17 +129,22 @@ class Play(graphene.Mutation):
 
     class Arguments:
         workflows = graphene.List(WorkflowID, required=True)
-        cylc_version = CylcVersion(description=sstrip('''
+        cylc_version = CylcVersion(
+            description=sstrip('''
                 Set the Cylc version that the workflow starts with.
-            '''))
-        initial_cycle_point = CyclePoint(description=sstrip('''
+            ''')
+        )
+        initial_cycle_point = CyclePoint(
+            description=sstrip('''
                 Set the initial cycle point.
 
                 Required if not defined in flow.cylc.
-            '''))
-        start_cycle_point = CyclePoint(description=sstrip('''
-                Set the start cycle point, which may be after the initial
-                cycle point.
+            ''')
+        )
+        start_cycle_point = CyclePoint(
+            description=sstrip('''
+                Set the start cycle point, which may be after the initial cycle
+                point.
 
                 If the specified start point is not in the sequence, the next
                 on-sequence point will be used.
@@ -146,61 +152,72 @@ class Play(graphene.Mutation):
                 (Not to be confused with the initial cycle point).
 
                 This replaces the Cylc 7 --warm option.
-            '''))
-        final_cycle_point = CyclePoint(description=sstrip('''
+            ''')
+        )
+        final_cycle_point = CyclePoint(
+            description=sstrip('''
                 Set the final cycle point. This command line option overrides
                 the workflow config option `[scheduling]final cycle point`.
-            '''))
-        stop_cycle_point = CyclePoint(description=sstrip('''
+            ''')
+        )
+        stop_cycle_point = CyclePoint(
+            description=sstrip('''
                 Set the stop cycle point. Shut down after all tasks have PASSED
                 this cycle point. (Not to be confused with the final cycle
                 point.) This command line option overrides the workflow config
                 option `[scheduling]stop after cycle point`.
-            '''))
-        pause = graphene.Boolean(description=sstrip('''
+            ''')
+        )
+        pause = graphene.Boolean(
+            description=sstrip('''
                 Pause workflow immediately on starting.
-            '''))
-        hold_cycle_point = CyclePoint(description=sstrip('''
+            ''')
+        )
+        hold_cycle_point = CyclePoint(
+            description=sstrip('''
                 Hold all tasks after this cycle point.
-            '''))
+            ''')
+        )
         mode = WorkflowRunMode(default_value=WorkflowRunMode.Live)
-        host = graphene.String(description=sstrip('''
+        host = graphene.String(
+            description=sstrip('''
                 Specify the host on which to start-up the workflow. If not
                 specified, a host will be selected using the
                 `[scheduler]run hosts` global config.
-            '''))
+            ''')
+        )
         main_loop = graphene.List(
             graphene.String,
             description=sstrip('''
                 Specify an additional plugin to run in the main loop. These
                 are used in combination with those specified in
                 `[scheduler][main loop]plugins`. Can be used multiple times.
-            '''),
+            ''')
         )
         upgrade = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Allow the workflow to be restarted with a newer
                 version of Cylc.
-            '''),
+            ''')
         )
         abort_if_any_task_fails = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 If set workflow will abort with status 1 if any task fails.
-            '''),
+            ''')
         )
         debug = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Output developer information and show exception tracebacks.
-            '''),
+            ''')
         )
         no_timestamp = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Don't timestamp logged messages.
-            '''),
+            ''')
         )
         set = graphene.List(  # noqa: A003 (graphql field name)
             graphene.String,
@@ -212,16 +229,18 @@ class Play(graphene.Mutation):
                 NOTE: these settings persist across workflow restarts, but can
                 be set again on the `cylc play` command line if they need to be
                 overridden.
-            '''),
+            ''')
         )
-        set_file = graphene.String(description=sstrip('''
+        set_file = graphene.String(
+            description=sstrip('''
                 Set the value of Jinja2 template variables in the workflow
                 definition from a file containing NAME=VALUE pairs (one per
                 line). As with "set" values should be valid Python literals so
                 strings must be quoted e.g.  `STR='string'`. NOTE: these
                 settings persist across workflow restarts, but can be set again
                 on the `cylc play` command line if they need to be overridden.
-            '''))
+            ''')
+        )
 
     result = GenericScalar()
 
@@ -234,13 +253,13 @@ class Reinstall:
             graphene.String,
             description=sstrip('''
                 Add Rose optional configurations (if Rose is used).
-            '''),
+            ''')
         )
         clear_rose_install_options = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Clear options previous set by cylc-rose.
-            '''),
+            ''')
         )
         rose_suite_defines = graphene.List(
             graphene.String,
@@ -250,7 +269,7 @@ class Reinstall:
 
                 Can be used to disable a setting using the syntax
                 `[SECTION]!KEY` or even `[!SECTION]`.
-            '''),
+            ''')
         )
         rose_template_variables = graphene.List(
             graphene.String,
@@ -260,7 +279,7 @@ class Reinstall:
                 Note: Specifying `FOO=1` to this argument is equivalent to
                 specifying `[template variables]FOO=1` to the `define`
                 argument.
-            '''),
+            ''')
         )
 
 
@@ -321,19 +340,19 @@ class Clean(graphene.Mutation):
 
                 A colon separated list that accepts globs,
                 e.g. ``.service/db:log:share:work/2020*``.
-            '''),
+            ''')
         )
         local_only = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Only clean on the local filesystem (not remote hosts).
-            '''),
+            ''')
         )
         remote_only = graphene.Boolean(
             default_value=False,
             description=sstrip('''
                 Only clean on remote hosts (not the local filesystem).
-            '''),
+            ''')
         )
 
     result = GenericScalar()
@@ -347,7 +366,6 @@ class Scan(graphene.Mutation):
             Valid for: stopped workflows.
         ''')
         resolver = partial(mutator, command='scan')
-
     result = GenericScalar()
 
 
@@ -636,7 +654,7 @@ _JOB_STATUS_TO_STATE = {
 
 
 def _status_to_state(
-    status: str,
+    status: str
 ) -> Tuple[Optional[int], Optional[int], Optional[bool]]:
     """Derive job state attributes from job status.
 
@@ -1036,7 +1054,7 @@ class UISQueries(Queries):
             description='workflow//[cycle/task]',
             required=True,
         ),
-        resolver=list_log_files,
+        resolver=list_log_files
     )
 
     tasks = graphene.List(
@@ -1082,11 +1100,9 @@ class UISQueries(Queries):
 # graphql-core has a subscribe field for both Meta and Field,
 # graphene at v3.4.3 does not. As a workaround
 # the subscribe function is looked up via the following mapping:
-SUB_RESOLVER_MAPPING.update(
-    {
-        'logs': stream_log,  # type: ignore
-    }
-)
+SUB_RESOLVER_MAPPING.update({
+    'logs': stream_log,  # type: ignore
+})
 
 
 class UISSubscriptions(Subscriptions):
@@ -1114,9 +1130,9 @@ class UISSubscriptions(Subscriptions):
         file=graphene.Argument(
             graphene.String,
             required=False,
-            description='File name of job log to fetch, e.g. job.out',
+            description='File name of job log to fetch, e.g. job.out'
         ),
-        resolver=identity_resolve,
+        resolver=identity_resolve
     )
 
 
@@ -1135,5 +1151,7 @@ NODE_MAP.update(
 )
 
 schema = graphene.Schema(
-    query=UISQueries, subscription=UISSubscriptions, mutation=UISMutations
+    query=UISQueries,
+    subscription=UISSubscriptions,
+    mutation=UISMutations
 )
